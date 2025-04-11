@@ -186,6 +186,10 @@ struct tcb *sys_task_create(void *tos,
     memset(new, 0, sizeof(struct tcb));
 
     new->kstack = (uint32_t)(p+PAGE_SIZE);
+
+    new->nice = 0;  // 新增初始化（直接跟在kstack之后）
+    //第三次实验添加项
+
     new->tid = tid++;
     new->state = TASK_STATE_READY;
     new->timeslice = TASK_TIMESLICE_DEFAULT;
