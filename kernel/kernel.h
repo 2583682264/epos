@@ -73,11 +73,12 @@ time_t mktime(struct tm *tm);
 struct tcb {
     /*hardcoded*/
     uint32_t    kstack;      /*saved top of the kernel stack for this task*/
+    int         nice;
 
     int         tid;         /* task id */
     int         state;       /* -1:waiting,0:running,1:ready,2:zombie */
 
-    int         nice;
+
 
 #define TASK_STATE_WAITING  -1
 #define TASK_STATE_READY     1
