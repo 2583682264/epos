@@ -335,9 +335,265 @@
 //    task_exit(0);
 //}
 
-/*
- * vim: filetype=c:fenc=utf-8:ts=4:et:sw=4:sts=4
- */
+
+
+//
+//#include <inttypes.h>
+//#include <stddef.h>
+//#include <math.h>
+//#include <stdio.h>
+//#include <sys/mman.h>
+//#include <syscall.h>
+//#include <netinet/in.h>
+//#include <stdlib.h>
+//#include "graphics.h"
+//#include <time.h>
+//
+//extern void* tlsf_create_with_pool(void* mem, size_t bytes);
+//extern void* g_heap;
+//int task1Id, task2Id;
+//
+//typedef struct {
+//    float* elements;
+//    int elementCount;
+//    int startX;
+//    int startY;
+//    int endX;
+//    int endY;
+//    COLORREF barColor;
+//    double barWidth;
+//    int totalHeight;
+//} VisualizationArray;
+//
+///* 函数声明 */
+//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
+//    int startX, int startY, int endX, int endY, COLORREF color);
+//void displayElement(VisualizationArray* array, int index);
+//void hideElement(VisualizationArray* array, int index);
+//void swapElements(VisualizationArray* array, int indexA, int indexB);
+//int compareElements(VisualizationArray* array, int indexA, int indexB);
+//int getElementValue(VisualizationArray* array, int index);
+//
+//void sleepMilliseconds(int ms);
+//void drawArea(int x1, int y1, int x2, int y2, COLORREF color);
+//int createTask(void* taskFunc, unsigned int stackSize);
+//void createShuffledArray(int* array, int elementCount);
+//void bubbleSortVisualization(VisualizationArray* array);
+//void runSortingTask1(void);
+//void runSortingTask2(void);
+//void updatePriorityDisplay(void);
+//void handleUserInput(void);
+//
+///* 全局变量 */
+//static struct timespec sleepTimeSpec = { 0, 0 };
+//static const int arraySize = 200;
+//int* numberArray;
+//
+///* 初始化可视化数组结构 */
+//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
+//    int startX, int startY, int endX, int endY, COLORREF color) {
+//    array->barWidth = (double)(endX - startX) / count;
+//    array->totalHeight = endY - startY;
+//    array->elements = (float*)malloc(count * sizeof(float));
+//
+//    int i;
+//    for (i = 0; i < count; ++i) {
+//        array->elements[i] = (float)data[i] / count;
+//    }
+//
+//    array->elementCount = count;
+//    array->startX = startX;
+//    array->startY = startY;
+//    array->endX = endX;
+//    array->endY = endY;
+//    array->barColor = color;
+//
+//    for (i = 0; i < count; i++) {
+//        displayElement(array, i);
+//    }
+//}
+//
+///* 可视化相关辅助函数 */
+//void highlightElementGreen(VisualizationArray* array, int index) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = left + array->barWidth;
+//    int height = array->totalHeight * array->elements[index];
+//    drawArea(left, array->endY - height, right, array->endY, RGB(0, 255, 0));
+//}
+//
+//void highlightElementRed(VisualizationArray* array, int index) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = left + array->barWidth;
+//    int height = array->totalHeight * array->elements[index];
+//    drawArea(left, array->endY - height, right, array->endY, RGB(255, 0, 0));
+//}
+//
+//void hideElement(VisualizationArray* array, int index) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = left + array->barWidth;
+//    drawArea(left, array->startY, right, array->endY, RGB(255, 255, 255));
+//}
+//
+//void displayElement(VisualizationArray* array, int index) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = left + array->barWidth;
+//    float normalizedValue = array->elements[index];
+//    int barHeight = array->totalHeight * normalizedValue;
+//    int red = getRValue(array->barColor) * normalizedValue;
+//    int green = getGValue(array->barColor) * normalizedValue;
+//    int blue = getBValue(array->barColor) * normalizedValue;
+//    drawArea(left, array->endY - barHeight, right, array->endY, RGB(red, green, blue));
+//}
+//
+///* 排序操作函数 */
+//void swapElements(VisualizationArray* array, int indexA, int indexB) {
+//    hideElement(array, indexA);
+//    hideElement(array, indexB);
+//    float temp = array->elements[indexA];
+//    array->elements[indexA] = array->elements[indexB];
+//    array->elements[indexB] = temp;
+//    displayElement(array, indexA);
+//    highlightElementRed(array, indexB);
+//    sleepMilliseconds(5);
+//    displayElement(array, indexB);
+//}
+//
+//int compareElements(VisualizationArray* array, int indexA, int indexB) {
+//    highlightElementGreen(array, indexA);
+//    sleepMilliseconds(2);
+//    displayElement(array, indexA);
+//    return array->elements[indexA] < array->elements[indexB];
+//}
+//
+///* 系统相关函数 */
+//void __main() {
+//    size_t heapSize = 32 * 1024 * 1024;
+//    void* heapBase = mmap(NULL, heapSize, PROT_READ | PROT_WRITE,
+//        MAP_PRIVATE | MAP_ANON, -1, 0);
+//    g_heap = tlsf_create_with_pool(heapBase, heapSize);
+//}
+//
+//void sleepMilliseconds(int ms) {
+//    sleepTimeSpec.tv_nsec = 1000000L * ms;
+//    nanosleep(&sleepTimeSpec, &sleepTimeSpec);
+//}
+//
+//void drawArea(int x1, int y1, int x2, int y2, COLORREF color) {
+//    int i, j;
+//    for (i = x1; i <= x2; i++) {
+//        for (j = y1; j < y2; j++) {
+//            setPixel(i, j, color);
+//        }
+//    }
+//}
+//
+//int createTask(void* taskFunc, unsigned int stackSize) {
+//    unsigned char* stack = (unsigned char*)malloc(stackSize);
+//    return task_create(stack + stackSize, taskFunc, NULL);
+//}
+//
+///* 数组处理函数 */
+//void createShuffledArray(int* array, int elementCount) {
+//    srand(time(NULL));
+//    int i;
+//    for (i = 0; i < elementCount; i++) {
+//        array[i] = i;
+//    }
+//    for (i = elementCount - 1; i > 0; i--) {
+//        int j = rand() % (i + 1);
+//        int temp = array[i];
+//        array[i] = array[j];
+//        array[j] = temp;
+//    }
+//}
+//
+///* 排序算法实现 */
+//void bubbleSortVisualization(VisualizationArray* array) {
+//    int count = array->elementCount;
+//    int i, j;
+//    for (i = 0; i < count - 1; i++) {
+//        for (j = 0; j < count - i - 1; j++) {
+//            if (compareElements(array, j + 1, j)) {
+//                swapElements(array, j, j + 1);
+//            }
+//        }
+//    }
+//}
+//
+///* 任务函数 */
+//void runSortingTask1(void) {
+//    VisualizationArray visualArray;
+//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
+//        0, 0, 750, 300, RGB(0, 0, 255));
+//    bubbleSortVisualization(&visualArray);
+//    while (1) {}
+//}
+//
+//void runSortingTask2(void) {
+//    VisualizationArray visualArray;
+//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
+//        0, 300, 750, 600, RGB(255, 255, 0));
+//    bubbleSortVisualization(&visualArray);
+//    while (1) {}
+//}
+//
+///* 界面更新函数 */
+//void updatePriorityDisplay(void) {
+//    int priority1 = getpriority(task1Id);
+//    int priority2 = getpriority(task2Id);
+//    drawArea(760, 0, 790, 600, RGB(255, 255, 255));
+//    drawArea(760, (int)(300 * ((double)priority1 / 40)), 790, 300, RGB(0, 0, 255));
+//    drawArea(760, (int)(300 + 300 * ((double)priority2 / 40)), 790, 600, RGB(255, 255, 0));
+//}
+//
+///* 用户输入处理 */
+//void handleUserInput(void) {
+//    int keyCode = getchar();
+//    int newPriority;
+//    while (1) {
+//        switch (keyCode) {
+//        case 0x4800: /* 上箭头 */
+//            newPriority = getpriority(task1Id) - 1;
+//            if (newPriority > 5) {
+//                setpriority(task1Id, newPriority);
+//                setpriority(task2Id, 40 - newPriority);
+//            }
+//            break;
+//        case 0x5000: /* 下箭头 */
+//            newPriority = getpriority(task1Id) + 1;
+//            if (newPriority < 35) {
+//                setpriority(task1Id, newPriority);
+//                setpriority(task2Id, 40 - newPriority);
+//            }
+//            break;
+//        default:
+//            break;
+//        }
+//        updatePriorityDisplay();
+//        sleepMilliseconds(100);
+//        keyCode = getchar();
+//    }
+//}
+//
+///* 主入口函数 */
+//void main(void* param) {
+//    printf("Task #%d: Initializing user task (param=0x%08x)!\r\n",
+//        task_getid(), param);
+//    init_graphic(0x0143); /* 初始化显示: 800x600 */
+//    drawArea(0, 0, 800, 600, RGB(255, 255, 255));
+//
+//    numberArray = (int*)malloc(arraySize * sizeof(int));
+//    createShuffledArray(numberArray, arraySize);
+//
+//    task1Id = createTask(runSortingTask1, 1024 * 1024);
+//    task2Id = createTask(runSortingTask2, 1024 * 1024);
+//    updatePriorityDisplay();
+//
+//    int controlTaskId = createTask(handleUserInput, 1024 * 1024);
+//    exit(0);
+//}
+
+
 #include <inttypes.h>
 #include <stddef.h>
 #include <math.h>
@@ -347,593 +603,430 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include "graphics.h"
+#include <time.h>
 
 extern void* tlsf_create_with_pool(void* mem, size_t bytes);
 extern void* g_heap;
+int task1Id, task2Id;
 
-/**
- * GCC insists on __main
- *    http://gcc.gnu.org/onlinedocs/gccint/Collect2.html
- */
-void __main()
-{
-    size_t heap_size = 32 * 1024 * 1024;
-    void* heap_base = mmap(NULL, heap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-    g_heap = tlsf_create_with_pool(heap_base, heap_size);
-}
+typedef struct {
+    float* elements;
+    int elementCount;
+    int startX;
+    int startY;
+    int endX;
+    int endY;
+    COLORREF barColor;
+    double barWidth;
+    int totalHeight;
+} VisualizationArray;
 
-/*  InfocEditBegin  */
+/* 函数声明 */
+void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
+    int startX, int startY, int endX, int endY, COLORREF color);
+void displayElement(VisualizationArray* array, int index);
+void hideElement(VisualizationArray* array, int index);
+void swapElements(VisualizationArray* array, int indexA, int indexB);
+int compareElements(VisualizationArray* array, int indexA, int indexB);
+int getElementValue(VisualizationArray* array, int index);
 
-/*  InfocE02 Begin  */
+void sleepMilliseconds(int ms);
+void drawArea(int x1, int y1, int x2, int y2, COLORREF color);
+int createTask(void* taskFunc, unsigned int stackSize);
+void createShuffledArray(int* array, int elementCount);
+void bubbleSortVisualization(VisualizationArray* array);
+void runSortingTask1(void);
+void runSortingTask2(void);
+void updatePriorityDisplay(void);
+void handleUserInput(void);
 
-#include <string.h>
-#define NUMS_LEN 300
-#define NUMS_MAX 1000
-#define METHOD_TOTAL 4
-#define REFRESH_RATE 1000
-#define MS 1000000
-#define REFRESH_MS 1000 / REFRESH_RATE
+/* 全局变量 */
+static struct timespec sleepTimeSpec = { 0, 0 };
+static const int arraySize = 250;
+int* numberArray;
 
-void sleep_ms(int ms) {
-    struct timespec req = {
-        .tv_sec = ms / 1000,
-        .tv_nsec = (ms % 1000) * MS
-    };
-    nanosleep(&req, &req);
-}
+/* 初始化可视化数组结构 */
+void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
+    int startX, int startY, int endX, int endY, COLORREF color) {
+    array->barWidth = (double)(endX - startX) / count;
+    array->totalHeight = endY - startY;
+    array->elements = (float*)malloc(count * sizeof(float));
 
-void draw_E02_graph(int index, int* dirty_indices, int dirty_count, int* nums, int color_1[3], int color_2[3]) {
-    int XRes = (int)g_graphic_dev.XResolution;
-    int YRes = (int)g_graphic_dev.YResolution;
-    int xWidth = XRes / METHOD_TOTAL;
-    int yWidth = YRes / NUMS_LEN;
-    int i, j, d;
-    for (d = 0; d < dirty_count; d++) {
-        i = dirty_indices[d];
-        int color[3];
-        for (j = 0; j < 3; j++) {
-            color[j] = (color_1[j] * nums[i] + color_2[j] * (NUMS_MAX - nums[i])) / NUMS_MAX;
-        }
-        int xStart = xWidth * index;
-        int xEnd = xWidth * index + xWidth * nums[i] / NUMS_MAX;
-        int xOver = xWidth * (index + 1);
-        int yStart = i * yWidth;
-        int yEnd = (i + 1) * yWidth;
-        for (j = yStart; j < yEnd - 1; j++) {
-            line(xStart, j, xEnd - 1, j, RGB(color[0], color[1], color[2]));
-            line(xEnd, j, xOver - 1, j, RGB(0, 0, 0));
-        }
-    }
-}
-
-void swap(int* a, int* b) {
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-void quicksort(int* arr, int left, int right, int color_1[3], int color_2[3]) {
-    if (left >= right) return;
-
-    int pivot = arr[right];
-    int i, j;
-    i = left - 1;
-
-    for (j = left; j < right; j++) {
-        if (arr[j] < pivot) {
-            i++;
-            swap(&arr[i], &arr[j]);
-            int dirty[2] = { i, j };
-            draw_E02_graph(0, dirty, 2, arr, color_1, color_2);
-            sleep_ms(REFRESH_MS);
-        }
-    }
-
-    swap(&arr[i + 1], &arr[right]);
-    int dirty[2] = { i + 1, right };
-    draw_E02_graph(0, dirty, 2, arr, color_1, color_2);
-    sleep_ms(REFRESH_MS);
-
-    quicksort(arr, left, i, color_1, color_2);
-    quicksort(arr, i + 2, right, color_1, color_2);
-}
-
-void tsk_a(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xEE, 0x9C, 0xA7 };
-    int color_2[3] = { 0xFF, 0xDD, 0xE1 };
-    int* dirty;
     int i;
-    dirty = (int*)malloc(NUMS_LEN * sizeof(int));
-    for (i = 0; i < NUMS_LEN; i++) {
-        dirty[i] = i;
+    for (i = 0; i < count; ++i) {
+        array->elements[i] = (float)data[i] / count;
     }
-    draw_E02_graph(0, dirty, NUMS_LEN, nums, color_1, color_2);
-    quicksort(nums, 0, NUMS_LEN - 1, color_1, color_2);
-    draw_E02_graph(0, dirty, NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+
+    array->elementCount = count;
+    array->startX = startX;
+    array->startY = startY;
+    array->endX = endX;
+    array->endY = endY;
+    array->barColor = color;
+
+    for (i = 0; i < count; i++) {
+        displayElement(array, i);
+    }
 }
 
-void merge(int* arr, int l, int m, int r, int color_1[3], int color_2[3]) {
-    int n1 = m - l + 1;
-    int n2 = r - m;
-    int* L = malloc(n1 * sizeof(int));
-    int* R = malloc(n2 * sizeof(int));
+/* 可视化相关辅助函数 */
+void highlightElementGreen(VisualizationArray* array, int index) {
+    int left = array->barWidth * index + array->startX;
+    int right = left + array->barWidth;
+    int height = array->totalHeight * array->elements[index];
+    drawArea(left, array->endY - height, right, array->endY, RGB(0, 255, 0));
+}
+
+void highlightElementRed(VisualizationArray* array, int index) {
+    int left = array->barWidth * index + array->startX;
+    int right = left + array->barWidth;
+    int height = array->totalHeight * array->elements[index];
+    drawArea(left, array->endY - height, right, array->endY, RGB(255, 0, 0));
+}
+
+void hideElement(VisualizationArray* array, int index) {
+    int left = array->barWidth * index + array->startX;
+    int right = left + array->barWidth;
+    drawArea(left, array->startY, right, array->endY, RGB(255, 255, 255));
+}
+
+void displayElement(VisualizationArray* array, int index) {
+    int left = array->barWidth * index + array->startX;
+    int right = left + array->barWidth;
+    float normalizedValue = array->elements[index];
+    int barHeight = array->totalHeight * normalizedValue;
+    int red = getRValue(array->barColor) * normalizedValue;
+    int green = getGValue(array->barColor) * normalizedValue;
+    int blue = getBValue(array->barColor) * normalizedValue;
+    drawArea(left, array->endY - barHeight, right, array->endY, RGB(red, green, blue));
+}
+
+/* 排序操作函数 */
+void swapElements(VisualizationArray* array, int indexA, int indexB) {
+    hideElement(array, indexA);
+    hideElement(array, indexB);
+    float temp = array->elements[indexA];
+    array->elements[indexA] = array->elements[indexB];
+    array->elements[indexB] = temp;
+    displayElement(array, indexA);
+    highlightElementRed(array, indexB);
+    sleepMilliseconds(5);
+    displayElement(array, indexB);
+}
+
+int compareElements(VisualizationArray* array, int indexA, int indexB) {
+    highlightElementGreen(array, indexA);
+    sleepMilliseconds(2);
+    displayElement(array, indexA);
+    return array->elements[indexA] < array->elements[indexB];
+}
+
+/* 系统相关函数 */
+void __main() {
+    size_t heapSize = 32 * 1024 * 1024;
+    void* heapBase = mmap(NULL, heapSize, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON, -1, 0);
+    g_heap = tlsf_create_with_pool(heapBase, heapSize);
+}
+
+void sleepMilliseconds(int ms) {
+    sleepTimeSpec.tv_nsec = 1000000L * ms;
+    nanosleep(&sleepTimeSpec, &sleepTimeSpec);
+}
+
+void drawArea(int x1, int y1, int x2, int y2, COLORREF color) {
     int i, j;
-    for (i = 0; i < n1; i++)
-        L[i] = arr[l + i];
-    for (j = 0; j < n2; j++)
-        R[j] = arr[m + 1 + j];
-    i = 0, j = 0;
-    int k = l;
-    while (i < n1 && j < n2) {
-        if (L[i] <= R[j]) {
-            arr[k] = L[i++];
+    for (i = x1; i <= x2; i++) {
+        for (j = y1; j < y2; j++) {
+            setPixel(i, j, color);
         }
-        else {
-            arr[k] = R[j++];
-        }
-        int dirty[1] = { k };
-        draw_E02_graph(1, dirty, 1, arr, color_1, color_2);
-        sleep_ms(REFRESH_MS);
-        k++;
-    }
-    while (i < n1) {
-        arr[k++] = L[i++];
-        int dirty[1] = { k - 1 };
-        draw_E02_graph(1, dirty, 1, arr, color_1, color_2);
-        sleep_ms(REFRESH_MS);
-    }
-    while (j < n2) {
-        arr[k++] = R[j++];
-        int dirty[1] = { k - 1 };
-        draw_E02_graph(1, dirty, 1, arr, color_1, color_2);
-        sleep_ms(REFRESH_MS);
-    }
-    free(L);
-    free(R);
-}
-
-void merge_sort(int* arr, int l, int r, int color_1[3], int color_2[3]) {
-    if (l < r) {
-        int m = l + (r - l) / 2;
-        merge_sort(arr, l, m, color_1, color_2);
-        merge_sort(arr, m + 1, r, color_1, color_2);
-        merge(arr, l, m, r, color_1, color_2);
     }
 }
 
-void tsk_b(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xFF, 0xE2, 0x59 };
-    int color_2[3] = { 0xFF, 0xA7, 0x51 };
-    int* dirty;
+int createTask(void* taskFunc, unsigned int stackSize) {
+    unsigned char* stack = (unsigned char*)malloc(stackSize);
+    return task_create(stack + stackSize, taskFunc, NULL);
+}
+
+/* 数组处理函数 */
+void createShuffledArray(int* array, int elementCount) {
+    srand(time(NULL));
     int i;
-    dirty = (int*)malloc(NUMS_LEN * sizeof(int));
-    for (i = 0; i < NUMS_LEN; i++) {
-        dirty[i] = i;
+    for (i = 0; i < elementCount; i++) {
+        array[i] = i;
     }
-    draw_E02_graph(1, dirty, NUMS_LEN, nums, color_1, color_2);
-    merge_sort(nums, 0, NUMS_LEN - 1, color_1, color_2);
-    draw_E02_graph(1, dirty, NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+    for (i = elementCount - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
 }
 
-void shell_sort(int* arr, int n, int color_1[3], int color_2[3]) {
-    int gap = 1;
-    while (gap < n / 3) {
-        gap = gap * 3 + 1;
-    }
-    while (gap > 0) {
-        int i;
-        for (i = gap; i < n; i++) {
-            int temp = arr[i];
-            int j;
-            for (j = i; j >= gap && arr[j - gap] > temp; j -= gap) {
-                arr[j] = arr[j - gap];
-                int dirty[1] = { j };
-                draw_E02_graph(2, dirty, 1, arr, color_1, color_2);
-                sleep_ms(REFRESH_MS);
+/* 排序算法实现 */
+void bubbleSortVisualization(VisualizationArray* array) {
+    int count = array->elementCount;
+    int i, j;
+    for (i = 0; i < count - 1; i++) {
+        for (j = 0; j < count - i - 1; j++) {
+            if (compareElements(array, j + 1, j)) {
+                swapElements(array, j, j + 1);
             }
-            arr[j] = temp;
-            int dirty[1] = { j };
-            draw_E02_graph(2, dirty, 1, arr, color_1, color_2);
-            sleep_ms(REFRESH_MS);
         }
-        gap = (gap - 1) / 3;
     }
 }
 
-void tsk_c(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xAC, 0xB6, 0xE5 };
-    int color_2[3] = { 0x86, 0xFD, 0xE8 };
-    int* dirty;
-    int i;
-    dirty = (int*)malloc(NUMS_LEN * sizeof(int));
-    for (i = 0; i < NUMS_LEN; i++) {
-        dirty[i] = i;
-    }
-    draw_E02_graph(2, dirty, NUMS_LEN, nums, color_1, color_2);
-    shell_sort(nums, NUMS_LEN, color_1, color_2);
-    draw_E02_graph(2, dirty, NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+/* 任务函数 */
+void runSortingTask1(void) {
+    VisualizationArray visualArray;
+    // 修改为淡蓝色 (RGB: 173,216,230)
+    initializeVisualizationArray(&visualArray, numberArray, arraySize,
+        0, 0, 750, 300, RGB(173, 216, 230));
+    bubbleSortVisualization(&visualArray);
+    while (1) {}
 }
 
-void insertion_sort(int* arr, int n, int color_1[3], int color_2[3]) {
-    int i;
-    for (i = 1; i < n; i++) {
-        int key = arr[i];
-        int j = i - 1;
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
-            int dirty[1] = { j + 1 };
-            draw_E02_graph(3, dirty, 1, arr, color_1, color_2);
-            sleep_ms(REFRESH_MS);
-            j--;
-        }
-        arr[j + 1] = key;
-        int dirty[1] = { j + 1 };
-        draw_E02_graph(3, dirty, 1, arr, color_1, color_2);
-        sleep_ms(REFRESH_MS);
-    }
+void runSortingTask2(void) {
+    VisualizationArray visualArray;
+    // 修改为淡紫色 (RGB: 224,176,255)
+    initializeVisualizationArray(&visualArray, numberArray, arraySize,
+        0, 300, 750, 600, RGB(224, 176, 255));
+    bubbleSortVisualization(&visualArray);
+    while (1) {}
 }
 
-void tsk_d(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xF0, 0xC2, 0x7B };
-    int color_2[3] = { 0x4B, 0x12, 0x48 };
-    int* dirty;
-    int i;
-    dirty = (int*)malloc(NUMS_LEN * sizeof(int));
-    for (i = 0; i < NUMS_LEN; i++) {
-        dirty[i] = i;
-    }
-    draw_E02_graph(3, dirty, NUMS_LEN, nums, color_1, color_2);
-    insertion_sort(nums, NUMS_LEN, color_1, color_2);
-    draw_E02_graph(3, dirty, NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+/* 界面更新函数 */
+void updatePriorityDisplay(void) {
+    int priority1 = getpriority(task1Id);
+    int priority2 = getpriority(task2Id);
+    drawArea(760, 0, 790, 600, RGB(255, 255, 255));
+    // 修改进度条颜色为对应的淡蓝色和淡紫色
+    drawArea(760, (int)(300 * ((double)priority1 / 40)), 790, 300, RGB(173, 216, 230));
+    drawArea(760, (int)(300 + 300 * ((double)priority2 / 40)), 790, 600, RGB(224, 176, 255));
 }
 
-/*   InfocE02 End   */
-
-/*  InfocE03 Begin  */
-
-#define BS_NUMS_LEN 100
-#define BS_NUMS_MAX 1000
-#define BS_REFRESH_MS 5
-
-void tsk_O(void* pv) {
+/* 用户输入处理 */
+void handleUserInput(void) {
+    int keyCode = getchar();
+    int newPriority;
     while (1) {
-        printf("O");
-        sleep_ms(50);
-    }
-}
-
-void tsk_S(void* pv) {
-    while (1) {
-        printf("S");
-        sleep_ms(50);
-    }
-}
-
-void draw_E03_maingraph(int index, int* dirty_indices, int dirty_count, int* nums, int color_1[3], int color_2[3]) {
-    int XRes = (int)g_graphic_dev.XResolution;
-    int YRes = (int)g_graphic_dev.YResolution;
-    int xWidth = XRes / 2 - 5;
-    int yWidth = (YRes - 40) / BS_NUMS_LEN;
-    int i, j, d;
-    for (d = 0; d < dirty_count; d++) {
-        i = dirty_indices[d];
-        int color[3];
-        for (j = 0; j < 3; j++) {
-            color[j] = (color_1[j] * nums[i] + color_2[j] * (BS_NUMS_MAX - nums[i])) / BS_NUMS_MAX;
-        }
-        int xStart = (index == 0 ? xWidth - xWidth * nums[i] / BS_NUMS_MAX : XRes - xWidth);
-        int xEnd = (index == 0 ? xWidth : XRes - xWidth + xWidth * nums[i] / BS_NUMS_MAX);
-        int yStart = i * yWidth;
-        int yEnd = (i + 1) * yWidth;
-        for (j = yStart; j < yEnd - 1; j++) {
-            line(xStart, j, xEnd - 1, j, RGB(color[0], color[1], color[2]));
-            if (index == 0) {
-                line(0, j, xStart - 1, j, RGB(0, 0, 0));
+        switch (keyCode) {
+        case 0x4800: /* 上箭头 */
+            newPriority = getpriority(task1Id) - 1;
+            if (newPriority > 5) {
+                setpriority(task1Id, newPriority);
+                setpriority(task2Id, 40 - newPriority);
             }
-            else {
-                line(xEnd, j, XRes - 1, j, RGB(0, 0, 0));
+            break;
+        case 0x5000: /* 下箭头 */
+            newPriority = getpriority(task1Id) + 1;
+            if (newPriority < 35) {
+                setpriority(task1Id, newPriority);
+                setpriority(task2Id, 40 - newPriority);
             }
+            break;
+        default:
+            break;
         }
+        updatePriorityDisplay();
+        sleepMilliseconds(100);
+        keyCode = getchar();
     }
 }
 
-void draw_E03_priority(int p1, int p2) {
-    int XRes = (int)g_graphic_dev.XResolution;
-    int YRes = (int)g_graphic_dev.YResolution;
-    int yStart = YRes - 35, yEnd = YRes - 5;
-    int xMid = XRes / 2, xPadding = 5, xWidth = 3, xGap = 1;
-    int i, j;
-    int maxPriority = 40;
-    int color[3];
-    int color1_1[3] = { 0xF0, 0xC2, 0x7B };
-    int color1_2[3] = { 0x4B, 0x12, 0x48 };
-    for (i = 0; i < maxPriority; i++) {
-        for (j = 0; j < 3; j++) {
-            color[j] = (color1_1[j] * i + color1_2[j] * (maxPriority - i)) / maxPriority;
-        }
-        for (j = xMid - xPadding - (xWidth + xGap) * i; j > xMid - xPadding - (xWidth + xGap) * (i + 1) + xGap; j--) {
-            line(j, yStart, j, yEnd, i < maxPriority - p1 ? RGB(color[0], color[1], color[2]) : RGB(0, 0, 0));
-        }
-    }
-    int color2_1[3] = { 0xAC, 0xB6, 0xE5 };
-    int color2_2[3] = { 0x86, 0xFD, 0xE8 };
-    for (i = 0; i < maxPriority; i++) {
-        for (j = 0; j < 3; j++) {
-            color[j] = (color2_1[j] * i + color2_2[j] * (maxPriority - i)) / maxPriority;
-        }
-        for (j = xMid + xPadding + (xWidth + xGap) * i; j < xMid + xPadding + (xWidth + xGap) * (i + 1) - xGap; j++) {
-            line(j, yStart, j, yEnd, i < maxPriority - p2 ? RGB(color[0], color[1], color[2]) : RGB(0, 0, 0));
-        }
-    }
+
+
+
+/* 主入口函数 */
+void main(void* param) {
+    printf("Task #%d: Initializing user task (param=0x%08x)!\r\n",
+        task_getid(), param);
+    init_graphic(0x0143); /* 初始化显示: 800x600 */
+    drawArea(0, 0, 800, 600, RGB(255, 255, 255));
+
+    numberArray = (int*)malloc(arraySize * sizeof(int));
+    createShuffledArray(numberArray, arraySize);
+
+    task1Id = createTask(runSortingTask1, 1024 * 1024);
+    task2Id = createTask(runSortingTask2, 1024 * 1024);
+    updatePriorityDisplay();
+
+    int controlTaskId = createTask(handleUserInput, 1024 * 1024);
+    exit(0);
 }
 
-void draw_E03_info() {
-    int XRes = (int)g_graphic_dev.XResolution;
-    int YRes = (int)g_graphic_dev.YResolution;
-    int info_left = 20, info_up = YRes - 80;
-    char ans[] = "..... .   . .....  ...       \n  .   ..  . .     .   .      \n  .   . . . ..... .   .  ....\n  .   .  .. .     .   . .    \n..... .   . .      ...   ....";
-    int i, line_info = 0, num_info = 0, size_pix = 5;
-    for (i = 0; i < strlen(ans); i++) {
-        num_info++;
-        if (ans[i] == '\n') {
-            line_info++;
-            num_info = 0;
-        }
-        else if (ans[i] == '.') {
-            int left = info_left + size_pix * num_info, right = left + size_pix;
-            int up = info_up + size_pix * line_info, down = up + size_pix;
-            for (; up < down; up++) {
-                line(left, up, right, up, RGB(86, 149, 173));
-            }
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//下面是稀释浓度部分的代码
+
+static void generateRandomString01(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
     }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
 }
 
-void bubble_sort(int index, int* arr, int n, int color_1[3], int color_2[3]) {
-    int i, j;
-    for (i = 0; i < n - 1; i++) {
-        for (j = 0; j < n - i - 1; j++) {
-            if (arr[j] > arr[j + 1]) {
-                swap(&arr[j], &arr[j + 1]);
-                int dirty[2] = { j, j + 1 };
-                draw_E03_maingraph(index, dirty, 2, arr, color_1, color_2);
-            }
-            sleep_ms(BS_REFRESH_MS);
-        }
+static void generateRandomString02(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
     }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
 }
 
-void tsk_bs1(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xF0, 0xC2, 0x7B };
-    int color_2[3] = { 0x4B, 0x12, 0x48 };
-    int* dirty;
+
+static void generateRandomString03(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+
+static void generateRandomString04(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString05(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
     int i;
-    dirty = (int*)malloc(BS_NUMS_LEN * sizeof(int));
-    for (i = 0; i < BS_NUMS_LEN; i++) {
-        dirty[i] = i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
     }
-    draw_E03_maingraph(0, dirty, BS_NUMS_LEN, nums, color_1, color_2);
-    bubble_sort(0, nums, BS_NUMS_LEN, color_1, color_2);
-    draw_E03_maingraph(0, dirty, BS_NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+    str[length - 1] = '\0';
 }
 
-void tsk_bs2(void* pv) {
-    int* nums = (int*)pv;
-    int color_1[3] = { 0xAC, 0xB6, 0xE5 };
-    int color_2[3] = { 0x86, 0xFD, 0xE8 };
-    int* dirty;
+static void generateRandomString06(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
     int i;
-    dirty = (int*)malloc(BS_NUMS_LEN * sizeof(int));
-    for (i = 0; i < BS_NUMS_LEN; i++) {
-        dirty[i] = i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
     }
-    draw_E03_maingraph(1, dirty, BS_NUMS_LEN, nums, color_1, color_2);
-    bubble_sort(1, nums, BS_NUMS_LEN, color_1, color_2);
-    draw_E03_maingraph(1, dirty, BS_NUMS_LEN, nums, (int[]) { 0, 255, 0 }, (int[]) { 0, 100, 0 });
-    free(dirty);
-    task_exit(0);
+    str[length - 1] = '\0';
 }
 
-struct ctrl {
-    int tid_A;
-    int tid_B;
-    int Mod;
-};
-
-void tsk_control(void* pv) {
-#define DEBUG 0
-#define TEST  1
-
-    struct ctrl* c = (struct ctrl*)pv;
-    if (c->Mod == TEST) {
-        draw_E03_priority(getpriority(c->tid_A), getpriority(c->tid_B));
+static void generateRandomString07(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
     }
-    while (1) {
-        int k = getchar();
-        switch (k) {
-        case 0x4800: // up
-        {
-            setpriority(c->tid_A, getpriority(c->tid_A) - 1);
-            if (c->Mod == DEBUG) {
-                printf("\ntask_A priority up\nA:%d B:%d\n", getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-            else if (c->Mod == TEST) {
-                draw_E03_priority(getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-        }
-        break;
-        case 0x5000: // down
-        {
-            setpriority(c->tid_A, getpriority(c->tid_A) + 1);
-            if (c->Mod == DEBUG) {
-                printf("\ntask_A priority down\nA:%d B:%d\n", getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-            else if (c->Mod == TEST) {
-                draw_E03_priority(getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-        }
-        break;
-        case 0x4d00: // right
-        {
-            setpriority(c->tid_B, getpriority(c->tid_B) - 1);
-            if (c->Mod == DEBUG) {
-                printf("\ntask_B priority up\nA:%d B:%d\n", getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-            else if (c->Mod == TEST) {
-                draw_E03_priority(getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-        }
-        break;
-        case 0x4b00: // left
-        {
-            setpriority(c->tid_B, getpriority(c->tid_B) + 1);
-            if (c->Mod == DEBUG) {
-                printf("\ntask_B priority down\nA:%d B:%d\n", getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-            else if (c->Mod == TEST) {
-                draw_E03_priority(getpriority(c->tid_A), getpriority(c->tid_B));
-            }
-        }
-        break;
-        }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
     }
+    str[length - 1] = '\0';
 }
 
-/*   InfocE03 End   */
-
-/*   InfocEditEnd   */
-
-/**
- * 第一个运行在用户模式的线程所执行的函数
- */
-void main(int* pv)
-{
-    printf("task #%d: I'm the first user task(pv=0x%08x)!\r\n",
-        task_getid(), pv);
-
-    /*  InfocEditBegin  */
-
-    int Experiment = 3;
-
-    /*  InfocE01 Begin  */
-
-    if (Experiment == 1)
-    {
-        time_t t1, t2;
-        t1 = time(&t2);
-        printf("%d\n%d\n%s\n", t1, t2, t1 == t2 ? "Same" : "Diff");
-        sleep(5);
-        t1 = time(&t2);
-        printf("%d\n%d\n%s\n", t1, t2, t1 == t2 ? "Same" : "Diff");
+static void generateRandomString08(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
     }
-
-    /*   InfocE01 End   */
-
-    /*  InfocE02 Begin  */
-
-    if (Experiment == 2)
-    {
-        init_graphic(0x143); // 800x600 px 32 byte
-        int i;
-        srand(time(NULL));
-        int nums[NUMS_LEN];
-        for (i = 0; i < NUMS_LEN; i++) {
-            nums[i] = rand() % NUMS_MAX;
-        }
-        unsigned char* stack_a, * stack_b, * stack_c, * stack_d;
-        unsigned int stack_size = 1024 * 1024;
-        stack_a = (unsigned char*)malloc(stack_size);
-        stack_b = (unsigned char*)malloc(stack_size);
-        stack_c = (unsigned char*)malloc(stack_size);
-        stack_d = (unsigned char*)malloc(stack_size);
-        int* nums_a = malloc(NUMS_LEN * sizeof(int));
-        int* nums_b = malloc(NUMS_LEN * sizeof(int));
-        int* nums_c = malloc(NUMS_LEN * sizeof(int));
-        int* nums_d = malloc(NUMS_LEN * sizeof(int));
-        memcpy(nums_a, nums, NUMS_LEN * sizeof(int));
-        memcpy(nums_b, nums, NUMS_LEN * sizeof(int));
-        memcpy(nums_c, nums, NUMS_LEN * sizeof(int));
-        memcpy(nums_d, nums, NUMS_LEN * sizeof(int));
-        task_create(stack_a + stack_size, &tsk_a, nums_a);
-        task_create(stack_b + stack_size, &tsk_b, nums_b);
-        task_create(stack_c + stack_size, &tsk_c, nums_c);
-        task_create(stack_d + stack_size, &tsk_d, nums_d);
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
     }
-
-    /*   InfocE02 End   */
-
-    /*  InfocE03 Begin  */
-
-    if (Experiment == 3)
-    {
-#define DEBUG 0
-#define TEST  1
-        int Mod = TEST;
-
-        if (Mod == DEBUG) {
-            unsigned char* stack_O, * stack_S, * stack_control;
-            unsigned int stack_size = 1024 * 1024;
-            stack_O = (unsigned char*)malloc(stack_size);
-            stack_S = (unsigned char*)malloc(stack_size);
-            stack_control = (unsigned char*)malloc(stack_size);
-            int tid_O = task_create(stack_O + stack_size, &tsk_O, NULL);
-            int tid_S = task_create(stack_S + stack_size, &tsk_S, NULL);
-            struct ctrl* c = (struct ctrl*)malloc(sizeof(struct ctrl));
-            c->tid_A = tid_O;
-            c->tid_B = tid_S;
-            c->Mod = Mod;
-            task_create(stack_control + stack_size, &tsk_control, c);
-        }
-        else if (Mod == TEST) {
-            init_graphic(0x143); // 800x600 px 32 byte
-            draw_E03_info();
-            int i;
-            srand(time(NULL));
-            int nums[BS_NUMS_LEN];
-            for (i = 0; i < BS_NUMS_LEN; i++) {
-                nums[i] = rand() % BS_NUMS_MAX;
-            }
-            unsigned char* stack_bs1, * stack_bs2, * stack_control;
-            unsigned int stack_size = 1024 * 1024;
-            stack_bs1 = (unsigned char*)malloc(stack_size);
-            stack_bs2 = (unsigned char*)malloc(stack_size);
-            stack_control = (unsigned char*)malloc(stack_size);
-            int* nums_bs1 = malloc(BS_NUMS_LEN * sizeof(int));
-            int* nums_bs2 = malloc(BS_NUMS_LEN * sizeof(int));
-            memcpy(nums_bs1, nums, BS_NUMS_LEN * sizeof(int));
-            memcpy(nums_bs2, nums, BS_NUMS_LEN * sizeof(int));
-            int tid_bs1 = task_create(stack_bs1 + stack_size, &tsk_bs1, nums_bs1);
-            int tid_bs2 = task_create(stack_bs2 + stack_size, &tsk_bs2, nums_bs2);
-            struct ctrl* c = (struct ctrl*)malloc(sizeof(struct ctrl));
-            c->tid_A = tid_bs1;
-            c->tid_B = tid_bs2;
-            c->Mod = Mod;
-            task_create(stack_control + stack_size, &tsk_control, c);
-        }
-    }
-
-    /*   InfocE03 End   */
-
-    /*   InfocEditEnd   */
-
-    while (1)
-        ;
-    task_exit(0);
+    str[length - 1] = '\0';
 }
-
-

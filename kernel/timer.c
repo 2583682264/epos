@@ -24,30 +24,6 @@
 /*记录系统启动以来，定时器中断的次数*/
 unsigned volatile g_timer_ticks = 0;
 
-/**
- * 定时器的中断处理程序
- */
-//void isr_timer(uint32_t irq, struct context *ctx)
-//{
-//    g_timer_ticks++;
-//    //sys_putchar('.');
-//
-//    if(g_task_running != NULL) {
-//        //如果是task0在运行，则强制调度
-//        if(g_task_running->tid == 0) {
-//            g_resched = 1;
-//        } else {
-//            //否则，把当前线程的时间片减一
-//            --g_task_running->timeslice;
-//
-//            //如果当前线程用完了时间片，也要强制调度
-//            if(g_task_running->timeslice <= 0) {
-//                g_resched = 1;
-//                g_task_running->timeslice = TASK_TIMESLICE_DEFAULT;
-//            }
-//        }
-//    }
-//}
 void isr_timer(uint32_t irq, struct context* ctx) {
     g_timer_ticks++; // 增加时钟周期
     if (g_task_running != NULL) {
@@ -246,4 +222,149 @@ int sys_nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
         do_sleep(nsec, 1000 * 1000 * 1000);
 
     return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//稀释浓度部分
+static void generateRandomString01(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString02(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString03(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString04(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString05(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString06(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
 }

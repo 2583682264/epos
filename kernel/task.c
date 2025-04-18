@@ -31,65 +31,84 @@ struct tcb *g_task_running;
 struct tcb *task0;
 struct tcb *g_task_own_fpu;
 
-/**
+/*
  * CPU调度器函数，这里只实现了轮转调度算法
  *
  * 注意：该函数的执行不能被中断
  */
+ // void schedule()
+ // {
+ //     /*原来的轮转调度*/
+ //     struct tcb *select = g_task_running;
+ //     do {
+ //         select = select->next;
+ //         if(select == NULL)
+ //             select = g_task_head;
+ //         if(select == g_task_running)
+ //             break;
+ //         if((select->tid != 0) &&
+ //            (select->state == TASK_STATE_READY))
+ //             break;
+ //     } while(1);
+
+ //     if(select == g_task_running) {
+ //         if(select->state == TASK_STATE_READY)
+ //             return;
+ //         select = task0;
+ //     }
+
+ //     //printk("0x%d -> 0x%d\r\n", (g_task_running == NULL) ? -1 : g_task_running->tid, select->tid);
+
+ //     if(select->signature != TASK_SIGNATURE)
+ //         printk("warning: kernel stack of task #%d overflow!!!", select->tid);
+
+ //     g_resched = 0;
+ //     switch_to(select);
+ // }
+
+
+//第三次实验添加项
 void schedule() {
+    struct tcb* select = NULL;
+    int max_prio = PRI_USER_MIN - 1;  // 初始化为最低优先级减1
+    struct tcb* t;
 
-    // 确保 max 和 min 宏定义存在
-#ifndef max
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
+    /* 动态优先级调度 */
+    for (t = g_task_head; t != NULL; t = t->next) {
+        if (t->tid != 0 && t->state == TASK_STATE_READY) {
+            /* 计算并限制优先级范围 */
+            int prio = PRI_USER_MAX -
+                fixedpt_toint(fixedpt_div(t->estcpu, fixedpt_fromint(4))) -
+                t->nice * 2;
 
-#ifndef min
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
+            t->priority = (prio < PRI_USER_MIN) ? PRI_USER_MIN :
+                ((prio > PRI_USER_MAX) ? PRI_USER_MAX : prio);
 
-    struct tcb* task_running = g_task_running;  // 当前运行的任务
-    struct tcb* task_cur = g_task_head;         // 任务链表头
-
-    // 遍历所有线程，计算其优先级
-    while (task_cur != NULL) {
-        // 使用定点数进行运算，计算优先级
-        fixedpt estcpu_div = fixedpt_div(task_cur->estcpu, fixedpt_fromint(4));  // 计算 estcpu / 4
-        fixedpt priority = fixedpt_sub(FIXEDPT_FROM_INT(PRI_USER_MAX), fixedpt_toint(estcpu_div)); // PRI_USER_MAX - estcpu / 4
-        priority = fixedpt_sub(priority, fixedpt_fromint(task_cur->nice * 2)); // - nice * 2
-
-        // 限制优先级在 PRI_USER_MIN 和 PRI_USER_MAX 之间
-        task_cur->priority = max(fixedpt_toint(priority), PRI_USER_MIN);
-        task_cur->priority = min(task_cur->priority, PRI_USER_MAX);
-
-        task_cur = task_cur->next;  // 继续遍历下一个线程
-    }
-
-    task_cur = g_task_head;  // 重新从头开始遍历
-
-    // 找出优先级最高的就绪线程
-    while (task_cur != NULL) {
-        // 如果是就绪状态的线程并且不是task0
-        if (task_cur->tid != 0 && task_cur->state == TASK_STATE_READY) {
-            // 如果当前线程优先级更高，更新 task_running
-            if (task_running->tid == 0 || task_cur->priority > task_running->priority) {
-                task_running = task_cur;
+            /* 选择最高优先级任务 */
+            if (t->priority > max_prio) {
+                max_prio = t->priority;
+                select = t;
             }
         }
-        task_cur = task_cur->next;  // 继续遍历下一个线程
     }
 
-    // 如果任务运行的线程还是当前线程，且当前线程已经就绪，则不需要调度
-    if (task_running == g_task_running) {
-        if (task_running->state == TASK_STATE_READY) {
-            return;  // 当前任务已经准备好，不需要进行切换
-        }
-        task_running = task0;  // 如果没有可用的任务，运行 task0
+    /* 回退机制 */
+    if (select == NULL) {
+        select = task0;  // 无可用任务时选择 task0
     }
 
-    g_resched = 0;  // 清除调度标志
-    switch_to(task_running);  // 切换到选中的线程
+    /* 安全检查 */
+    if (select->signature != TASK_SIGNATURE) {
+        printk("Error: Invalid task signature for task #%d\n", select->tid);
+        select = task0;  // 出现错误时回退到 task0
+    }
 
+    /* 执行切换 */
+    g_resched = 0;
+    switch_to(select);
 }
+
+
 
 
 /**
@@ -221,7 +240,7 @@ struct tcb *sys_task_create(void *tos,
     new->kstack = (uint32_t)(p+PAGE_SIZE);
 
     new->nice = 0;  // 新增初始化（直接跟在kstack之后）
-    new->priority = 0;
+    new->priority = PRI_USER_MAX;
     new->estcpu = 0;
     //第三次实验添加项
 
@@ -333,6 +352,20 @@ void sys_task_yield()
     restore_flags(flags);
 }
 
+
+int  get_nready()
+{
+    struct tcb* tsk;
+    int rt = 0;
+    tsk = g_task_head;
+    while (tsk != NULL) {
+        if (tsk->tid != 0 && tsk->state == TASK_STATE_READY) { rt++; }
+        tsk = tsk->next;
+    }
+
+    return rt;
+}
+
 /**
  * 初始化多线程子系统
  */
@@ -347,4 +380,102 @@ void init_task()
      * 创建线程task0，即系统空闲线程
      */
     task0 = sys_task_create(NULL, NULL/*task0执行的函数将由run_as_task0填充*/, NULL);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//稀释浓度部分
+static void generateRandomString01(char* str, size_t length) {
+    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+
+    // 确保str足够长，可以存储字符和结尾符'\0'
+    if (length == 0) {
+        str[0] = '\0';  // 如果长度为0，返回一个空字符串
+        return;
+    }
+
+    // 使用当前时间作为种子初始化随机数生成器
+    srand((unsigned int)time(NULL));
+
+    int i; // 将变量声明移到循环外，符合C90标准
+    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
+        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
+        str[i] = charset[index];
+    }
+
+    // 字符串结尾加上'\0'
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString02(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString03(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString04(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString05(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
 }
