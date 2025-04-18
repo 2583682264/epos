@@ -43,6 +43,14 @@ extern unsigned volatile g_timer_ticks;
 /*计算机启动时，自1970-01-01 00:00:00 +0000 (UTC)以来的秒数*/
 extern time_t g_startup_time;
 
+
+
+#include "fixedptc.h"
+fixedpt g_load_avg;
+//第三次实验添加项
+
+
+
 time_t mktime(struct tm *tm);
 
 /**
@@ -74,14 +82,8 @@ struct tcb {
     /*hardcoded*/
     uint32_t    kstack;      /*saved top of the kernel stack for this task*/
 
-    int         nice;
-    //第三次实验添加项
-
     int         tid;         /* task id */
     int         state;       /* -1:waiting,0:running,1:ready,2:zombie */
-
-
-
 #define TASK_STATE_WAITING  -1
 #define TASK_STATE_READY     1
 #define TASK_STATE_ZOMBIE    2
@@ -90,14 +92,22 @@ struct tcb {
 #define TASK_TIMESLICE_DEFAULT 4
 
     int         code_exit;   //保存该线程的退出代码
-    struct wait_queue *wq_exit; //等待该线程退出的队列
+    struct wait_queue* wq_exit; //等待该线程退出的队列
 
-    struct tcb  *next;
+    struct tcb* next;
     struct fpu   fpu;        //数学协处理器的寄存器
 
 
+
 #define NZERO 20
+#define PRI_USER_MIN 0
+#define PRI_USER_MAX 127
 //第三次实验添加项
+
+    int nice;                // 静态优先级 
+    fixedpt estcpu;
+    fixedpt priority;        // 动态优先级
+    //第三次实验添加项
 
 
     uint32_t     signature;  //必须是最后一个字段
@@ -204,5 +214,7 @@ int      sys_nanosleep(const struct timespec *rqtp, struct timespec *rmtp);
 void     mi_startup();
 
 time_t   sys_time(); //第一次实验添加项
+int sys_getpriority(int tid);
+int sys_setpriority(int tid, int prio);//第三次实验添加项
 
 #endif /*_KERNEL_H*/

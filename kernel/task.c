@@ -21,6 +21,10 @@
 #include <string.h>
 #include "kernel.h"
 
+#define FIXEDPT_SHIFT 16  // 固定的小数位数，16 位小数
+#define FIXEDPT_FROM_INT(x) ((x) << FIXEDPT_SHIFT)  // 将整数转换为定点数
+//第三次实验添加项
+
 int g_resched;
 struct tcb *g_task_head;
 struct tcb *g_task_running;
@@ -32,34 +36,61 @@ struct tcb *g_task_own_fpu;
  *
  * 注意：该函数的执行不能被中断
  */
-void schedule()
-{
-    struct tcb *select = g_task_running;
-    do {
-        select = select->next;
-        if(select == NULL)
-            select = g_task_head;
-        if(select == g_task_running)
-            break;
-        if((select->tid != 0) &&
-           (select->state == TASK_STATE_READY))
-            break;
-    } while(1);
+void schedule() {
 
-    if(select == g_task_running) {
-        if(select->state == TASK_STATE_READY)
-            return;
-        select = task0;
+    // 确保 max 和 min 宏定义存在
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
+    struct tcb* task_running = g_task_running;  // 当前运行的任务
+    struct tcb* task_cur = g_task_head;         // 任务链表头
+
+    // 遍历所有线程，计算其优先级
+    while (task_cur != NULL) {
+        // 使用定点数进行运算，计算优先级
+        fixedpt estcpu_div = fixedpt_div(task_cur->estcpu, fixedpt_fromint(4));  // 计算 estcpu / 4
+        fixedpt priority = fixedpt_sub(FIXEDPT_FROM_INT(PRI_USER_MAX), fixedpt_toint(estcpu_div)); // PRI_USER_MAX - estcpu / 4
+        priority = fixedpt_sub(priority, fixedpt_fromint(task_cur->nice * 2)); // - nice * 2
+
+        // 限制优先级在 PRI_USER_MIN 和 PRI_USER_MAX 之间
+        task_cur->priority = max(fixedpt_toint(priority), PRI_USER_MIN);
+        task_cur->priority = min(task_cur->priority, PRI_USER_MAX);
+
+        task_cur = task_cur->next;  // 继续遍历下一个线程
     }
 
-    //printk("0x%d -> 0x%d\r\n", (g_task_running == NULL) ? -1 : g_task_running->tid, select->tid);
+    task_cur = g_task_head;  // 重新从头开始遍历
 
-    if(select->signature != TASK_SIGNATURE)
-        printk("warning: kernel stack of task #%d overflow!!!", select->tid);
+    // 找出优先级最高的就绪线程
+    while (task_cur != NULL) {
+        // 如果是就绪状态的线程并且不是task0
+        if (task_cur->tid != 0 && task_cur->state == TASK_STATE_READY) {
+            // 如果当前线程优先级更高，更新 task_running
+            if (task_running->tid == 0 || task_cur->priority > task_running->priority) {
+                task_running = task_cur;
+            }
+        }
+        task_cur = task_cur->next;  // 继续遍历下一个线程
+    }
 
-    g_resched = 0;
-    switch_to(select);
+    // 如果任务运行的线程还是当前线程，且当前线程已经就绪，则不需要调度
+    if (task_running == g_task_running) {
+        if (task_running->state == TASK_STATE_READY) {
+            return;  // 当前任务已经准备好，不需要进行切换
+        }
+        task_running = task0;  // 如果没有可用的任务，运行 task0
+    }
+
+    g_resched = 0;  // 清除调度标志
+    switch_to(task_running);  // 切换到选中的线程
+
 }
+
 
 /**
  * 把当前线程切换为等待状态，等待在*head队列中
@@ -160,6 +191,8 @@ struct tcb* get_task(int tid)
     return tsk;
 }
 
+
+
 /**
  * 系统调用task_create的执行函数
  *
@@ -188,6 +221,8 @@ struct tcb *sys_task_create(void *tos,
     new->kstack = (uint32_t)(p+PAGE_SIZE);
 
     new->nice = 0;  // 新增初始化（直接跟在kstack之后）
+    new->priority = 0;
+    new->estcpu = 0;
     //第三次实验添加项
 
     new->tid = tid++;

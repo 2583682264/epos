@@ -27,27 +27,93 @@ unsigned volatile g_timer_ticks = 0;
 /**
  * 定时器的中断处理程序
  */
-void isr_timer(uint32_t irq, struct context *ctx)
-{
-    g_timer_ticks++;
-    //sys_putchar('.');
-
-    if(g_task_running != NULL) {
-        //如果是task0在运行，则强制调度
-        if(g_task_running->tid == 0) {
+//void isr_timer(uint32_t irq, struct context *ctx)
+//{
+//    g_timer_ticks++;
+//    //sys_putchar('.');
+//
+//    if(g_task_running != NULL) {
+//        //如果是task0在运行，则强制调度
+//        if(g_task_running->tid == 0) {
+//            g_resched = 1;
+//        } else {
+//            //否则，把当前线程的时间片减一
+//            --g_task_running->timeslice;
+//
+//            //如果当前线程用完了时间片，也要强制调度
+//            if(g_task_running->timeslice <= 0) {
+//                g_resched = 1;
+//                g_task_running->timeslice = TASK_TIMESLICE_DEFAULT;
+//            }
+//        }
+//    }
+//}
+void isr_timer(uint32_t irq, struct context* ctx) {
+    g_timer_ticks++; // 增加时钟周期
+    if (g_task_running != NULL) {
+        // 如果是task0在运行，则强制调度
+        if (g_task_running->tid == 0) {
             g_resched = 1;
-        } else {
-            //否则，把当前线程的时间片减一
+        }
+        else {
+            // 否则，把当前线程的时间片减一
             --g_task_running->timeslice;
-
-            //如果当前线程用完了时间片，也要强制调度
-            if(g_task_running->timeslice <= 0) {
+            // 如果当前线程用完了时间片，也要强制调度
+            if (g_task_running->timeslice <= 0) {
                 g_resched = 1;
                 g_task_running->timeslice = TASK_TIMESLICE_DEFAULT;
+            }
+
+            // 更新当前线程的 estcpu
+            g_task_running->estcpu = fixedpt_add(g_task_running->estcpu, FIXEDPT_ONE);
+
+            // 每秒钟更新一次负载平均值
+            if ((g_timer_ticks % HZ) == 0) {
+                int ready_tasks = 0;
+                struct tcb* tsk = g_task_head;
+
+                // 统计就绪队列中的任务数
+                while (tsk != NULL) {
+                    if (tsk->state == TASK_STATE_READY) {
+                        ready_tasks++;
+                    }
+                    tsk = tsk->next;
+                }
+
+                // 更新系统负载均值
+                fixedpt fpr59_60 = fixedpt_div(fixedpt_fromint(59), fixedpt_fromint(60));
+                fixedpt fpr01_60 = fixedpt_div(FIXEDPT_ONE, fixedpt_fromint(60));
+                g_load_avg = fixedpt_add(fixedpt_mul(fpr59_60, g_load_avg), fixedpt_mul(fpr01_60, fixedpt_fromint(ready_tasks)));
+
+                // 重新计算每个线程的 estcpu 和 priority
+                tsk = g_task_head;
+                while (tsk != NULL) {
+                    // 计算线程的动态优先级
+                    fixedpt fpr = fixedpt_mul(FIXEDPT_TWO, g_load_avg);
+                    fpr = fixedpt_div(fpr, fixedpt_add(fpr, FIXEDPT_ONE));
+
+                    // 更新线程的 estcpu
+                    tsk->estcpu = fixedpt_add(fixedpt_mul(fpr, tsk->estcpu), fixedpt_fromint(tsk->nice));
+
+                    // 计算动态优先级
+                    tsk->priority = fixedpt_toint(fixedpt_sub(fixedpt_fromint(PRI_USER_MAX), tsk->estcpu));
+
+                    // 确保优先级在合法范围内
+                    if (tsk->priority < PRI_USER_MIN) {
+                        tsk->priority = PRI_USER_MIN;
+                    }
+                    else if (tsk->priority > PRI_USER_MAX) {
+                        tsk->priority = PRI_USER_MAX;
+                    }
+
+                    tsk = tsk->next;
+                }
             }
         }
     }
 }
+
+
 
 #define barrier() __asm__ __volatile__ ("" : : : "memory")
 static void busy_wait(unsigned loops)

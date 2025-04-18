@@ -49,7 +49,8 @@ time_t g_startup_time;
  * 初始化i8259中断控制器
  */
 
-
+int sys_getpriority(int tid);
+int sys_setpriority(int tid, int prio);
 
 static void init_i8259(uint8_t idt_offset)
 {
@@ -856,6 +857,8 @@ void syscall(struct context *ctx)
     case SYSCALL_ioctl:
 
 
+
+
     case SYSCALL_time:
     {
         time_t* loc = *(time_t**)(ctx->esp + 4);
@@ -866,6 +869,22 @@ void syscall(struct context *ctx)
         break;
     }
     //第一次实验添加项
+    case SYSCALL_getpriority:
+    {
+        int tid = *(int*)(ctx->esp + 4);
+        ctx->eax = sys_getpriority(tid);
+    }
+    break;
+
+    case SYSCALL_setpriority:
+    {
+        int tid = *(int*)(ctx->esp + 4);
+        int prio = *(int*)(ctx->esp + 8);
+        ctx->eax = sys_setpriority(tid, prio);
+    }
+    break;
+    //第三次实验添加项
+            
 
     default:
         printk("syscall #%d not implemented.\r\n", ctx->eax);
@@ -873,6 +892,81 @@ void syscall(struct context *ctx)
         break;
     }
 }
+
+
+/* 第三次实验添加项 */
+/* 在 kernel/machdep.c 中定义全局任务链表头指针 */
+struct tcb* g_task_head;
+
+/* 第三次实验添加项 */
+/* 添加链表遍历函数（保持原子性） */
+static struct tcb* get_task(int tid) {
+    struct tcb* tsk = g_task_head;
+
+    /* 遍历链表（假设无锁的场景下由调用者保证同步） */
+    while (tsk) {
+        if (tsk->tid == tid)
+            return tsk;
+        tsk = tsk->next;
+    }
+    return NULL; /* Not found */
+}
+
+/* 第三次实验添加项 */
+int sys_getpriority(int tid) {
+    struct tcb* task;
+    unsigned long flags;
+    int nice_value;
+
+    save_flags_cli(flags);  /* 进入临界区 */
+
+    if (tid == 0) {
+        task = g_task_running;  /* 获取当前线程TCB */
+    }
+    else {
+        task = get_task(tid);   /* 通过tid查找TCB */
+    }
+
+    if (!task) {
+        restore_flags(flags);   /* 恢复中断状态 */
+        return -1;              /* 无效tid */
+    }
+
+    nice_value = task->nice + NZERO;  /* 计算返回值 */
+    restore_flags(flags);       /* 退出临界区 */
+    return nice_value;
+}
+
+/* 第三次实验添加项 */
+int sys_setpriority(int tid, int prio) {
+    struct tcb* task;
+    unsigned long flags;
+
+    /* 校验prio范围（0 ≤ prio ≤ 39） */
+    if (prio < 0 || prio >= 2 * NZERO) {
+        return -1;
+    }
+
+    save_flags_cli(flags);      /* 进入临界区 */
+
+    if (tid == 0) {
+        task = g_task_running;  /* 当前线程 */
+    }
+    else {
+        task = get_task(tid);
+    }
+
+    if (!task) {
+        restore_flags(flags);
+        return -1;
+    }
+
+    task->nice = prio - NZERO;  /* 设置nice值 */
+    restore_flags(flags);       /* 退出临界区 */
+    return 0;
+}
+
+
 
 time_t sys_time()
 {
@@ -1139,3 +1233,7 @@ void cstart(uint32_t magic, uint32_t mbi)
      */
     mi_startup();
 }
+
+
+
+

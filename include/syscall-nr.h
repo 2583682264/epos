@@ -40,6 +40,12 @@
 #define SYSCALL_putchar       1000
 #define SYSCALL_getchar       1001
 
+
 #define SYSCALL_time          2025 //第一次实验添加项
+
+#define SYSCALL_getpriority    2026
+#define SYSCALL_setpriority    2027 //第三次实验添加项
+
+
 
 #endif /*_SYSCALLNR_H*/

@@ -26,3 +26,7 @@ WRAPPER(send)
 WRAPPER(ioctl)
 
 WRAPPER(time)  /*第一次实验添加项*/
+
+WRAPPER(getpriority)
+WRAPPER(setpriority)/*第三次实验添加项*/
+
