@@ -192,7 +192,22 @@ int sys_sem_signal(int semid) {
 
 
 //œ° Õ≈®∂»≤ø∑÷
-static void generateRandomString07(char* str, size_t length) {
+static void generateRandomString01(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString02(char* str, size_t length) {
     char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
     if (length == 0) {
         str[0] = '\0';
