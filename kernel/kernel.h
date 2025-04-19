@@ -136,6 +136,18 @@ void init_task(void);
 void syscall(struct context *ctx);
 extern void *ret_from_syscall;
 
+//信号量
+struct semaphore {
+    int sem_id;
+    int sem_val;
+    struct wait_queue* list;
+    struct semaphore* next;
+};
+extern struct semaphore* g_sem_head;
+extern struct semaphore* g_sem_select;
+extern int g_sem_id;
+//第四次实验添加项
+
 /**
  * `VADDR' comes from FreeBSD
  */

@@ -338,10 +338,6 @@
 
 
 
-
-
-
-
 //#include <inttypes.h>
 //#include <stddef.h>
 //#include <math.h>
@@ -353,136 +349,144 @@
 //#include "graphics.h"
 //#include <time.h>
 //
+///* 颜色定义 */
+//#define LIGHT_PURPLE RGB(230, 204, 255)  // 淡紫色
+//#define LIGHT_RED    RGB(255, 153, 153)  // 淡红色
+//#define WHITE        RGB(255, 255, 255)
+//
 //extern void* tlsf_create_with_pool(void* mem, size_t bytes);
 //extern void* g_heap;
-//int task1Id, task2Id;
+//int producerThreadId, consumerThreadId;
 //
+///* 可视化数组结构体 */
 //typedef struct {
-//    float* elements;
-//    int elementCount;
-//    int startX;
-//    int startY;
-//    int endX;
-//    int endY;
-//    COLORREF barColor;
-//    double barWidth;
-//    int totalHeight;
-//} VisualizationArray;
+//    double* normalizedValues;  // 归一化后的数值数组
+//    int size;                  // 数组大小
+//    int startX, startY;        // 起始坐标
+//    int endX, endY;            // 结束坐标
+//    COLORREF baseColor;        // 基础颜色
+//    double barWidth;           // 柱状图宽度
+//    int barHeight;             // 柱状图高度
+//} VisualArray;
 //
 ///* 函数声明 */
-//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
+//void InitializeVisualArray(VisualArray* array, int* sourceData, int dataSize,
 //    int startX, int startY, int endX, int endY, COLORREF color);
-//void displayElement(VisualizationArray* array, int index);
-//void hideElement(VisualizationArray* array, int index);
-//void swapElements(VisualizationArray* array, int indexA, int indexB);
-//int compareElements(VisualizationArray* array, int indexA, int indexB);
-//int getElementValue(VisualizationArray* array, int index);
+//void DisplayVisualArray(VisualArray* array);
+//void HighlightPosition(VisualArray* array, int index, COLORREF color);
+//void HidePosition(VisualArray* array, int index);
+//void SwapElements(VisualArray* array, int firstIdx, int secondIdx);
+//int CompareElements(VisualArray* array, int firstIdx, int secondIdx);
 //
-//void sleepMilliseconds(int ms);
-//void drawArea(int x1, int y1, int x2, int y2, COLORREF color);
-//int createTask(void* taskFunc, unsigned int stackSize);
-//void createShuffledArray(int* array, int elementCount);
-//void bubbleSortVisualization(VisualizationArray* array);
-//void runSortingTask1(void);
-//void runSortingTask2(void);
-//void updatePriorityDisplay(void);
-//void handleUserInput(void);
+//void SleepMilliseconds(int ms);
+//void DrawRectangleArea(int x1, int y1, int x2, int y2, COLORREF color);
+//int CreateTask(void* taskFunc, unsigned int stackSize);
+//void GenerateRandomArray(int* array, int size);
+//void ProducerTask();
+//void ConsumerTask();
 //
 ///* 全局变量 */
-//static struct timespec sleepTimeSpec = { 0, 0 };
-//static const int arraySize = 200;
-//int* numberArray;
+//struct timespec timerSpec = { 0, 0 };
+//const int ARRAY_SIZE = 50;
+//int* dataArray;
 //
-///* 初始化可视化数组结构 */
-//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
-//    int startX, int startY, int endX, int endY, COLORREF color) {
-//    array->barWidth = (double)(endX - startX) / count;
-//    array->totalHeight = endY - startY;
-//    array->elements = (float*)malloc(count * sizeof(float));
-//
-//    int i;
-//    for (i = 0; i < count; ++i) {
-//        array->elements[i] = (float)data[i] / count;
-//    }
-//
-//    array->elementCount = count;
-//    array->startX = startX;
-//    array->startY = startY;
-//    array->endX = endX;
-//    array->endY = endY;
-//    array->barColor = color;
-//
-//    for (i = 0; i < count; i++) {
-//        displayElement(array, i);
-//    }
-//}
-//
-///* 可视化相关辅助函数 */
-//void highlightElementGreen(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    int height = array->totalHeight * array->elements[index];
-//    drawArea(left, array->endY - height, right, array->endY, RGB(0, 255, 0));
-//}
-//
-//void highlightElementRed(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    int height = array->totalHeight * array->elements[index];
-//    drawArea(left, array->endY - height, right, array->endY, RGB(255, 0, 0));
-//}
-//
-//void hideElement(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    drawArea(left, array->startY, right, array->endY, RGB(255, 255, 255));
-//}
-//
-//void displayElement(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    float normalizedValue = array->elements[index];
-//    int barHeight = array->totalHeight * normalizedValue;
-//    int red = getRValue(array->barColor) * normalizedValue;
-//    int green = getGValue(array->barColor) * normalizedValue;
-//    int blue = getBValue(array->barColor) * normalizedValue;
-//    drawArea(left, array->endY - barHeight, right, array->endY, RGB(red, green, blue));
-//}
-//
-///* 排序操作函数 */
-//void swapElements(VisualizationArray* array, int indexA, int indexB) {
-//    hideElement(array, indexA);
-//    hideElement(array, indexB);
-//    float temp = array->elements[indexA];
-//    array->elements[indexA] = array->elements[indexB];
-//    array->elements[indexB] = temp;
-//    displayElement(array, indexA);
-//    highlightElementRed(array, indexB);
-//    sleepMilliseconds(5);
-//    displayElement(array, indexB);
-//}
-//
-//int compareElements(VisualizationArray* array, int indexA, int indexB) {
-//    highlightElementGreen(array, indexA);
-//    sleepMilliseconds(2);
-//    displayElement(array, indexA);
-//    return array->elements[indexA] < array->elements[indexB];
-//}
-//
-///* 系统相关函数 */
-//void __main() {
+///* 内存初始化 */
+//void __main()
+//{
 //    size_t heapSize = 32 * 1024 * 1024;
 //    void* heapBase = mmap(NULL, heapSize, PROT_READ | PROT_WRITE,
 //        MAP_PRIVATE | MAP_ANON, -1, 0);
 //    g_heap = tlsf_create_with_pool(heapBase, heapSize);
 //}
 //
-//void sleepMilliseconds(int ms) {
-//    sleepTimeSpec.tv_nsec = 1000000L * ms;
-//    nanosleep(&sleepTimeSpec, &sleepTimeSpec);
+///* 可视化数组初始化 */
+//void InitializeVisualArray(VisualArray* array, int* sourceData, int dataSize,
+//    int startX, int startY, int endX, int endY, COLORREF color)
+//{
+//    int i, maxValue = 0;
+//    array->barWidth = (double)(endX - startX) / dataSize;
+//    array->barHeight = endY - startY;
+//    array->normalizedValues = (double*)malloc(dataSize * sizeof(double));
+//
+//    for (i = 0; i < dataSize; i++)
+//        maxValue = sourceData[i] > maxValue ? sourceData[i] : maxValue;
+//
+//    for (i = 0; i < dataSize; i++)
+//        array->normalizedValues[i] = (double)sourceData[i] / maxValue;
+//
+//    array->size = dataSize;
+//    array->startX = startX;
+//    array->startY = startY;
+//    array->endX = endX;
+//    array->endY = endY;
+//    array->baseColor = color;
+//
+//    DrawRectangleArea(startX, startY, endX, endY, WHITE);
+//    for (i = 0; i < dataSize; i++) {
+//        SleepMilliseconds(10);
+//        DisplayVisualArray(array);
+//    }
 //}
 //
-//void drawArea(int x1, int y1, int x2, int y2, COLORREF color) {
+///* 图形绘制相关函数 */
+//void HighlightPosition(VisualArray* array, int index, COLORREF color) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = array->barWidth * (index + 1) + array->startX;
+//    int height = array->barHeight * array->normalizedValues[index];
+//    DrawRectangleArea(left, array->endY - height, right - 2, array->endY, color);
+//}
+//
+//void HidePosition(VisualArray* array, int index) {
+//    int left = array->barWidth * index + array->startX;
+//    int right = array->barWidth * (index + 1) + array->startX;
+//    DrawRectangleArea(left, array->startY, right - 2, array->endY, WHITE);
+//}
+//
+//void DisplayVisualArray(VisualArray* array) {
+//    int i;
+//    for (i = 0; i < array->size; i++) {
+//        int left = array->barWidth * i + array->startX;
+//        int right = array->barWidth * (i + 1) + array->startX;
+//        double ratio = array->normalizedValues[i];
+//        int height = array->barHeight * ratio;
+//
+//        int r = getRValue(array->baseColor) * ratio + (1 - ratio) * (255 - getRValue(array->baseColor));
+//        int g = getGValue(array->baseColor) * ratio + (1 - ratio) * (255 - getGValue(array->baseColor));
+//        int b = getBValue(array->baseColor) * ratio + (1 - ratio) * (255 - getBValue(array->baseColor));
+//
+//        DrawRectangleArea(left, array->endY - height, right - 2, array->endY, RGB(r, g, b));
+//    }
+//}
+//
+///* 数组操作函数 */
+//void SwapElements(VisualArray* array, int firstIdx, int secondIdx) {
+//    HidePosition(array, firstIdx);
+//    HidePosition(array, secondIdx);
+//
+//    double temp = array->normalizedValues[firstIdx];
+//    array->normalizedValues[firstIdx] = array->normalizedValues[secondIdx];
+//    array->normalizedValues[secondIdx] = temp;
+//
+//    DisplayVisualArray(array);
+//    HighlightPosition(array, secondIdx, LIGHT_RED);
+//    SleepMilliseconds(2);
+//    DisplayVisualArray(array);
+//}
+//
+//int CompareElements(VisualArray* array, int firstIdx, int secondIdx) {
+//    HighlightPosition(array, firstIdx, LIGHT_PURPLE);
+//    SleepMilliseconds(1);
+//    DisplayVisualArray(array);
+//    return array->normalizedValues[firstIdx] < array->normalizedValues[secondIdx];
+//}
+//
+///* 系统相关函数 */
+//void SleepMilliseconds(int ms) {
+//    timerSpec.tv_nsec = 1000000L * ms;
+//    nanosleep(&timerSpec, &timerSpec);
+//}
+//
+//void DrawRectangleArea(int x1, int y1, int x2, int y2, COLORREF color) {
 //    int i, j;
 //    for (i = x1; i <= x2; i++) {
 //        for (j = y1; j < y2; j++) {
@@ -491,545 +495,519 @@
 //    }
 //}
 //
-//int createTask(void* taskFunc, unsigned int stackSize) {
+//int CreateTask(void* taskFunc, unsigned int stackSize) {
 //    unsigned char* stack = (unsigned char*)malloc(stackSize);
-//    return task_create(stack + stackSize, taskFunc, NULL);
+//    return task_create(stack + stackSize, taskFunc, (void*)0);
 //}
 //
-///* 数组处理函数 */
-//void createShuffledArray(int* array, int elementCount) {
+//void GenerateRandomArray(int* array, int size) {
 //    srand(time(NULL));
 //    int i;
-//    for (i = 0; i < elementCount; i++) {
-//        array[i] = i;
-//    }
-//    for (i = elementCount - 1; i > 0; i--) {
-//        int j = rand() % (i + 1);
-//        int temp = array[i];
-//        array[i] = array[j];
-//        array[j] = temp;
-//    }
+//    for (i = 0; i < size; i++)
+//        array[i] = rand() % size;
 //}
 //
 ///* 排序算法实现 */
-//void bubbleSortVisualization(VisualizationArray* array) {
-//    int count = array->elementCount;
+//int Partition(VisualArray* array, int low, int high) {
+//    int pivotIndex = high;
+//    int i = low - 1;
+//    int j;
+//
+//    for (j = low; j < high; j++) {
+//        if (CompareElements(array, j, pivotIndex)) {
+//            i++;
+//            SwapElements(array, i, j);
+//        }
+//    }
+//    SwapElements(array, i + 1, pivotIndex);
+//    return i + 1;
+//}
+//
+//void QuickSort(VisualArray* array, int low, int high) {
+//    if (low < high && low >= 0 && high < array->size) {
+//        int pivot = Partition(array, low, high);
+//        QuickSort(array, low, pivot - 1);
+//        QuickSort(array, pivot + 1, high);
+//    }
+//}
+//
+//void BubbleSort(VisualArray* array) {
 //    int i, j;
-//    for (i = 0; i < count - 1; i++) {
-//        for (j = 0; j < count - i - 1; j++) {
-//            if (compareElements(array, j + 1, j)) {
-//                swapElements(array, j, j + 1);
+//    for (i = 0; i < array->size - 1; i++) {
+//        for (j = 0; j < array->size - i - 1; j++) {
+//            if (!CompareElements(array, j, j + 1)) {
+//                SwapElements(array, j, j + 1);
 //            }
 //        }
 //    }
 //}
 //
-///* 任务函数 */
-//void runSortingTask1(void) {
-//    VisualizationArray visualArray;
-//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
-//        0, 0, 750, 300, RGB(0, 0, 255));
-//    bubbleSortVisualization(&visualArray);
-//    while (1) {}
-//}
+///* 生产者-消费者实现 */
+//#define BUFFER_SIZE 10
+//int emptySemaphore;
+//int fullSemaphore;
+//int* mutexSemaphores;
+//VisualArray* visualBuffers;
 //
-//void runSortingTask2(void) {
-//    VisualizationArray visualArray;
-//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
-//        0, 300, 750, 600, RGB(255, 255, 0));
-//    bubbleSortVisualization(&visualArray);
-//    while (1) {}
-//}
+//void ProducerTask() {
+//    int currentArea = 0;
+//    double areaHeight = (double)600 / BUFFER_SIZE;
 //
-///* 界面更新函数 */
-//void updatePriorityDisplay(void) {
-//    int priority1 = getpriority(task1Id);
-//    int priority2 = getpriority(task2Id);
-//    drawArea(760, 0, 790, 600, RGB(255, 255, 255));
-//    drawArea(760, (int)(300 * ((double)priority1 / 40)), 790, 300, RGB(0, 0, 255));
-//    drawArea(760, (int)(300 + 300 * ((double)priority2 / 40)), 790, 600, RGB(255, 255, 0));
-//}
-//
-///* 用户输入处理 */
-//void handleUserInput(void) {
-//    int keyCode = getchar();
-//    int newPriority;
 //    while (1) {
-//        switch (keyCode) {
-//        case 0x4800: /* 上箭头 */
-//            newPriority = getpriority(task1Id) - 1;
-//            if (newPriority > 5) {
-//                setpriority(task1Id, newPriority);
-//                setpriority(task2Id, 40 - newPriority);
-//            }
-//            break;
-//        case 0x5000: /* 下箭头 */
-//            newPriority = getpriority(task1Id) + 1;
-//            if (newPriority < 35) {
-//                setpriority(task1Id, newPriority);
-//                setpriority(task2Id, 40 - newPriority);
-//            }
-//            break;
-//        default:
-//            break;
-//        }
-//        updatePriorityDisplay();
-//        sleepMilliseconds(100);
-//        keyCode = getchar();
+//        sem_wait(emptySemaphore);
+//        sem_wait(mutexSemaphores[currentArea]);
+//
+//        GenerateRandomArray(dataArray, ARRAY_SIZE);
+//        InitializeVisualArray(&visualBuffers[currentArea], dataArray, ARRAY_SIZE,
+//            0, currentArea * areaHeight, 760,
+//            (currentArea + 1) * areaHeight - 2, LIGHT_PURPLE);
+//
+//        sem_signal(mutexSemaphores[currentArea]);
+//        sem_signal(fullSemaphore);
+//        currentArea = (currentArea + 1) % BUFFER_SIZE;
 //    }
 //}
 //
-///* 主入口函数 */
-//void main(void* param) {
-//    printf("Task #%d: Initializing user task (param=0x%08x)!\r\n",
-//        task_getid(), param);
-//    init_graphic(0x0143); /* 初始化显示: 800x600 */
-//    drawArea(0, 0, 800, 600, RGB(255, 255, 255));
+//void ConsumerTask() {
+//    int currentArea = 0;
 //
-//    numberArray = (int*)malloc(arraySize * sizeof(int));
-//    createShuffledArray(numberArray, arraySize);
+//    while (1) {
+//        sem_wait(fullSemaphore);
+//        sem_wait(mutexSemaphores[currentArea]);
 //
-//    task1Id = createTask(runSortingTask1, 1024 * 1024);
-//    task2Id = createTask(runSortingTask2, 1024 * 1024);
-//    updatePriorityDisplay();
+//        QuickSort(&visualBuffers[currentArea], 0, ARRAY_SIZE - 1);
 //
-//    int controlTaskId = createTask(handleUserInput, 1024 * 1024);
-//    exit(0);
+//        sem_signal(mutexSemaphores[currentArea]);
+//        sem_signal(emptySemaphore);
+//        currentArea = (currentArea + 1) % BUFFER_SIZE;
+//    }
 //}
-
 //
-//#include <inttypes.h>
-//#include <stddef.h>
-//#include <math.h>
-//#include <stdio.h>
-//#include <sys/mman.h>
-//#include <syscall.h>
-//#include <netinet/in.h>
-//#include <stdlib.h>
-//#include "graphics.h"
-//#include <time.h>
+///* 优先级显示 */
+//void ShowPriority() {
+//    int producerPriority = getpriority(producerThreadId);
+//    int consumerPriority = getpriority(consumerThreadId);
 //
-//extern void* tlsf_create_with_pool(void* mem, size_t bytes);
-//extern void* g_heap;
-//int task1Id, task2Id;
+//    DrawRectangleArea(760, 0, 799, 600, WHITE);
+//    DrawRectangleArea(760, 600 - (int)(600 * ((double)producerPriority / 40)),
+//        779, 600, LIGHT_PURPLE);
+//    DrawRectangleArea(780, 600 - (int)(600 * ((double)consumerPriority / 40)),
+//        799, 600, LIGHT_RED);
+//}
 //
-//typedef struct {
-//    float* elements;
-//    int elementCount;
-//    int startX;
-//    int startY;
-//    int endX;
-//    int endY;
-//    COLORREF barColor;
-//    double barWidth;
-//    int totalHeight;
-//} VisualizationArray;
+///* 控制任务 */
+//void ControlTask() {
+//    int key = getchar();
+//    int priority;
 //
-///* 函数声明 */
-//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
-//    int startX, int startY, int endX, int endY, COLORREF color);
-//void displayElement(VisualizationArray* array, int index);
-//void hideElement(VisualizationArray* array, int index);
-//void swapElements(VisualizationArray* array, int indexA, int indexB);
-//int compareElements(VisualizationArray* array, int indexA, int indexB);
-//int getElementValue(VisualizationArray* array, int index);
+//    while (1) {
+//        switch (key) {
+//        case 0x4800:  // 上箭头
+//            priority = getpriority(producerThreadId) - 1;
+//            if (priority > 5) {
+//                setpriority(producerThreadId, priority);
+//                setpriority(consumerThreadId, 40 - priority);
+//            }
+//            break;
 //
-//void sleepMilliseconds(int ms);
-//void drawArea(int x1, int y1, int x2, int y2, COLORREF color);
-//int createTask(void* taskFunc, unsigned int stackSize);
-//void createShuffledArray(int* array, int elementCount);
-//void bubbleSortVisualization(VisualizationArray* array);
-//void runSortingTask1(void);
-//void runSortingTask2(void);
-//void updatePriorityDisplay(void);
-//void handleUserInput(void);
+//        case 0x5000:  // 下箭头
+//            priority = getpriority(producerThreadId) + 1;
+//            if (priority < 35) {
+//                setpriority(producerThreadId, priority);
+//                setpriority(consumerThreadId, 40 - priority);
+//            }
+//            break;
+//        }
+//        ShowPriority();
+//        SleepMilliseconds(100);
+//        key = getchar();
+//    }
+//}
 //
-///* 全局变量 */
-//static struct timespec sleepTimeSpec = { 0, 0 };
-//static const int arraySize = 250;
-//int* numberArray;
+///* 主函数 */
+//void main(void* pv)
+//{
+//    printf("Task #%d: Initializing system (pv=0x%08x)\n", task_getid(), pv);
 //
-///* 初始化可视化数组结构 */
-//void initializeVisualizationArray(VisualizationArray* array, int* data, int count,
-//    int startX, int startY, int endX, int endY, COLORREF color) {
-//    array->barWidth = (double)(endX - startX) / count;
-//    array->totalHeight = endY - startY;
-//    array->elements = (float*)malloc(count * sizeof(float));
+//    init_graphic(0x0143);  // 初始化图形模式 800x600
+//    DrawRectangleArea(0, 0, 800, 600, WHITE);
+//    dataArray = (int*)malloc(ARRAY_SIZE * sizeof(int));
+//
+//    // 初始化缓冲区
+//    visualBuffers = (VisualArray*)malloc(sizeof(VisualArray) * BUFFER_SIZE);
+//    emptySemaphore = sem_create(BUFFER_SIZE);
+//    fullSemaphore = sem_create(0);
+//    mutexSemaphores = (int*)malloc(sizeof(int) * BUFFER_SIZE);
 //
 //    int i;
-//    for (i = 0; i < count; ++i) {
-//        array->elements[i] = (float)data[i] / count;
-//    }
+//    for (i = 0; i < BUFFER_SIZE; i++)
+//        mutexSemaphores[i] = sem_create(1);
 //
-//    array->elementCount = count;
-//    array->startX = startX;
-//    array->startY = startY;
-//    array->endX = endX;
-//    array->endY = endY;
-//    array->barColor = color;
+//    // 创建任务
+//    consumerThreadId = CreateTask(ConsumerTask, 4096);
+//    producerThreadId = CreateTask(ProducerTask, 4096);
+//    CreateTask(ControlTask, 4096);
 //
-//    for (i = 0; i < count; i++) {
-//        displayElement(array, i);
-//    }
-//}
-//
-///* 可视化相关辅助函数 */
-//void highlightElementGreen(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    int height = array->totalHeight * array->elements[index];
-//    drawArea(left, array->endY - height, right, array->endY, RGB(0, 255, 0));
-//}
-//
-//void highlightElementRed(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    int height = array->totalHeight * array->elements[index];
-//    drawArea(left, array->endY - height, right, array->endY, RGB(255, 0, 0));
-//}
-//
-//void hideElement(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    drawArea(left, array->startY, right, array->endY, RGB(255, 255, 255));
-//}
-//
-//void displayElement(VisualizationArray* array, int index) {
-//    int left = array->barWidth * index + array->startX;
-//    int right = left + array->barWidth;
-//    float normalizedValue = array->elements[index];
-//    int barHeight = array->totalHeight * normalizedValue;
-//    int red = getRValue(array->barColor) * normalizedValue;
-//    int green = getGValue(array->barColor) * normalizedValue;
-//    int blue = getBValue(array->barColor) * normalizedValue;
-//    drawArea(left, array->endY - barHeight, right, array->endY, RGB(red, green, blue));
-//}
-//
-///* 排序操作函数 */
-//void swapElements(VisualizationArray* array, int indexA, int indexB) {
-//    hideElement(array, indexA);
-//    hideElement(array, indexB);
-//    float temp = array->elements[indexA];
-//    array->elements[indexA] = array->elements[indexB];
-//    array->elements[indexB] = temp;
-//    displayElement(array, indexA);
-//    highlightElementRed(array, indexB);
-//    sleepMilliseconds(5);
-//    displayElement(array, indexB);
-//}
-//
-//int compareElements(VisualizationArray* array, int indexA, int indexB) {
-//    highlightElementGreen(array, indexA);
-//    sleepMilliseconds(2);
-//    displayElement(array, indexA);
-//    return array->elements[indexA] < array->elements[indexB];
-//}
-//
-///* 系统相关函数 */
-//void __main() {
-//    size_t heapSize = 32 * 1024 * 1024;
-//    void* heapBase = mmap(NULL, heapSize, PROT_READ | PROT_WRITE,
-//        MAP_PRIVATE | MAP_ANON, -1, 0);
-//    g_heap = tlsf_create_with_pool(heapBase, heapSize);
-//}
-//
-//void sleepMilliseconds(int ms) {
-//    sleepTimeSpec.tv_nsec = 1000000L * ms;
-//    nanosleep(&sleepTimeSpec, &sleepTimeSpec);
-//}
-//
-//void drawArea(int x1, int y1, int x2, int y2, COLORREF color) {
-//    int i, j;
-//    for (i = x1; i <= x2; i++) {
-//        for (j = y1; j < y2; j++) {
-//            setPixel(i, j, color);
-//        }
-//    }
-//}
-//
-//int createTask(void* taskFunc, unsigned int stackSize) {
-//    unsigned char* stack = (unsigned char*)malloc(stackSize);
-//    return task_create(stack + stackSize, taskFunc, NULL);
-//}
-//
-///* 数组处理函数 */
-//void createShuffledArray(int* array, int elementCount) {
-//    srand(time(NULL));
-//    int i;
-//    for (i = 0; i < elementCount; i++) {
-//        array[i] = i;
-//    }
-//    for (i = elementCount - 1; i > 0; i--) {
-//        int j = rand() % (i + 1);
-//        int temp = array[i];
-//        array[i] = array[j];
-//        array[j] = temp;
-//    }
-//}
-//
-///* 排序算法实现 */
-//void bubbleSortVisualization(VisualizationArray* array) {
-//    int count = array->elementCount;
-//    int i, j;
-//    for (i = 0; i < count - 1; i++) {
-//        for (j = 0; j < count - i - 1; j++) {
-//            if (compareElements(array, j + 1, j)) {
-//                swapElements(array, j, j + 1);
-//            }
-//        }
-//    }
-//}
-//
-///* 任务函数 */
-//void runSortingTask1(void) {
-//    VisualizationArray visualArray;
-//    // 修改为淡蓝色 (RGB: 173,216,230)
-//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
-//        0, 0, 750, 300, RGB(173, 216, 230));
-//    bubbleSortVisualization(&visualArray);
-//    while (1) {}
-//}
-//
-//void runSortingTask2(void) {
-//    VisualizationArray visualArray;
-//    // 修改为淡紫色 (RGB: 224,176,255)
-//    initializeVisualizationArray(&visualArray, numberArray, arraySize,
-//        0, 300, 750, 600, RGB(224, 176, 255));
-//    bubbleSortVisualization(&visualArray);
-//    while (1) {}
-//}
-//
-///* 界面更新函数 */
-//void updatePriorityDisplay(void) {
-//    int priority1 = getpriority(task1Id);
-//    int priority2 = getpriority(task2Id);
-//    drawArea(760, 0, 790, 600, RGB(255, 255, 255));
-//    // 修改进度条颜色为对应的淡蓝色和淡紫色
-//    drawArea(760, (int)(300 * ((double)priority1 / 40)), 790, 300, RGB(173, 216, 230));
-//    drawArea(760, (int)(300 + 300 * ((double)priority2 / 40)), 790, 600, RGB(224, 176, 255));
-//}
-//
-///* 用户输入处理 */
-//void handleUserInput(void) {
-//    int keyCode = getchar();
-//    int newPriority;
-//    while (1) {
-//        switch (keyCode) {
-//        case 0x4800: /* 上箭头 */
-//            newPriority = getpriority(task1Id) - 1;
-//            if (newPriority > 5) {
-//                setpriority(task1Id, newPriority);
-//                setpriority(task2Id, 40 - newPriority);
-//            }
-//            break;
-//        case 0x5000: /* 下箭头 */
-//            newPriority = getpriority(task1Id) + 1;
-//            if (newPriority < 35) {
-//                setpriority(task1Id, newPriority);
-//                setpriority(task2Id, 40 - newPriority);
-//            }
-//            break;
-//        default:
-//            break;
-//        }
-//        updatePriorityDisplay();
-//        sleepMilliseconds(100);
-//        keyCode = getchar();
-//    }
-//}
-//
-//
-//
-//
-///* 主入口函数 */
-//void main(void* param) {
-//    printf("Task #%d: Initializing user task (param=0x%08x)!\r\n",
-//        task_getid(), param);
-//    init_graphic(0x0143); /* 初始化显示: 800x600 */
-//    drawArea(0, 0, 800, 600, RGB(255, 255, 255));
-//
-//    numberArray = (int*)malloc(arraySize * sizeof(int));
-//    createShuffledArray(numberArray, arraySize);
-//
-//    task1Id = createTask(runSortingTask1, 1024 * 1024);
-//    task2Id = createTask(runSortingTask2, 1024 * 1024);
-//    updatePriorityDisplay();
-//
-//    int controlTaskId = createTask(handleUserInput, 1024 * 1024);
-//    exit(0);
+//    while (1) SleepMilliseconds(1000);
 //}
 
 
 
+#include <inttypes.h>
+#include <stddef.h>
+#include <math.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <syscall.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include "graphics.h"
+#include <time.h>
 
+/* 颜色定义 */
+#define LIGHT_PURPLE RGB(230, 204, 255)  // 淡紫色
+#define LIGHT_RED    RGB(255, 153, 153)  // 淡红色
+#define WHITE        RGB(255, 255, 255)
+#define DEEP_BLUE    RGB(0, 0, 128)      // 深蓝色
 
+extern void* tlsf_create_with_pool(void* mem, size_t bytes);
+extern void* g_heap;
+int producerThreadId, consumerThreadId;
 
+/* 可视化数组结构体 */
+typedef struct {
+    double* normalizedValues;  // 归一化后的数值数组
+    int size;                  // 数组大小
+    int startX, startY;        // 起始坐标
+    int endX, endY;            // 结束坐标
+    COLORREF baseColor;        // 基础颜色
+    double barHeight;          // 柱状图高度
+    int barWidth;              // 柱状图宽度
+} VisualArray;
 
+/* 函数声明 */
+void InitializeVisualArray(VisualArray* array, int* sourceData, int dataSize,
+    int startX, int startY, int endX, int endY, COLORREF color);
+void DisplayVisualArray(VisualArray* array);
+void HighlightPosition(VisualArray* array, int index, COLORREF color);
+void HidePosition(VisualArray* array, int index);
+void SwapElements(VisualArray* array, int firstIdx, int secondIdx);
+int CompareElements(VisualArray* array, int firstIdx, int secondIdx);
 
+void SleepMilliseconds(int ms);
+void DrawRectangleArea(int x1, int y1, int x2, int y2, COLORREF color);
+int CreateTask(void* taskFunc, unsigned int stackSize);
+void GenerateRandomArray(int* array, int size);
+void ProducerTask();
+void ConsumerTask();
+void DrawProgressBar(int progress, int total);
 
+/* 全局变量 */
+struct timespec timerSpec = { 0, 0 };
+const int ARRAY_SIZE = 80;
+int* dataArray;
 
-
-
-
-
-
-
-
-
-
-
-//下面是稀释浓度部分的代码
-
-static void generateRandomString01(char* str, size_t length) {
-    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-
-    // 确保str足够长，可以存储字符和结尾符'\0'
-    if (length == 0) {
-        str[0] = '\0';  // 如果长度为0，返回一个空字符串
-        return;
-    }
-
-    // 使用当前时间作为种子初始化随机数生成器
-    srand((unsigned int)time(NULL));
-
-    int i; // 将变量声明移到循环外，符合C90标准
-    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
-        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
-        str[i] = charset[index];
-    }
-
-    // 字符串结尾加上'\0'
-    str[length - 1] = '\0';
+/* 内存初始化 */
+void __main()
+{
+    size_t heapSize = 32 * 1024 * 1024;
+    void* heapBase = mmap(NULL, heapSize, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANON, -1, 0);
+    g_heap = tlsf_create_with_pool(heapBase, heapSize);
 }
 
-static void generateRandomString02(char* str, size_t length) {
-    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-
-    // 确保str足够长，可以存储字符和结尾符'\0'
-    if (length == 0) {
-        str[0] = '\0';  // 如果长度为0，返回一个空字符串
-        return;
-    }
-
-    // 使用当前时间作为种子初始化随机数生成器
-    srand((unsigned int)time(NULL));
-
-    int i; // 将变量声明移到循环外，符合C90标准
-    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
-        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
-        str[i] = charset[index];
-    }
-
-    // 字符串结尾加上'\0'
-    str[length - 1] = '\0';
-}
-
-
-static void generateRandomString03(char* str, size_t length) {
-    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-
-    // 确保str足够长，可以存储字符和结尾符'\0'
-    if (length == 0) {
-        str[0] = '\0';  // 如果长度为0，返回一个空字符串
-        return;
-    }
-
-    // 使用当前时间作为种子初始化随机数生成器
-    srand((unsigned int)time(NULL));
-
-    int i; // 将变量声明移到循环外，符合C90标准
-    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
-        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
-        str[i] = charset[index];
-    }
-
-    // 字符串结尾加上'\0'
-    str[length - 1] = '\0';
-}
-
-
-static void generateRandomString04(char* str, size_t length) {
-    // 定义字符集：包括小写字母、大写字母、数字和特殊符号
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-
-    // 确保str足够长，可以存储字符和结尾符'\0'
-    if (length == 0) {
-        str[0] = '\0';  // 如果长度为0，返回一个空字符串
-        return;
-    }
-
-    // 使用当前时间作为种子初始化随机数生成器
-    srand((unsigned int)time(NULL));
-
-    int i; // 将变量声明移到循环外，符合C90标准
-    for (i = 0; i < length - 1; i++) { // 留出最后一个位置存放'\0'
-        int index = rand() % (sizeof(charset) - 1);  // 获取字符集中的随机索引
-        str[i] = charset[index];
-    }
-
-    // 字符串结尾加上'\0'
-    str[length - 1] = '\0';
-}
-
-static void generateRandomString05(char* str, size_t length) {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-    if (length == 0) {
-        str[0] = '\0';
-        return;
-    }
-    srand((unsigned int)time(NULL));
+/* 可视化数组初始化 */
+void InitializeVisualArray(VisualArray* array, int* sourceData, int dataSize,
+    int startX, int startY, int endX, int endY, COLORREF color)
+{
     int i;
-    for (i = 0; i < length - 1; i++) {
-        int index = rand() % (sizeof(charset) - 1);
-        str[i] = charset[index];
+    int maxValue = 0;
+    array->barHeight = (double)(endY - startY) / dataSize;
+    array->barWidth = endX - startX;
+    array->normalizedValues = (double*)malloc(dataSize * sizeof(double));
+
+    for (i = 0; i < dataSize; i++)
+        maxValue = sourceData[i] > maxValue ? sourceData[i] : maxValue;
+
+    for (i = 0; i < dataSize; i++)
+        array->normalizedValues[i] = (double)sourceData[i] / maxValue;
+
+    array->size = dataSize;
+    array->startX = startX;
+    array->startY = startY;
+    array->endX = endX;
+    array->endY = endY;
+    array->baseColor = color;
+
+    DrawRectangleArea(startX, startY, endX, endY, WHITE);
+    for (i = 0; i < dataSize; i++) {
+        SleepMilliseconds(10);
+        DisplayVisualArray(array);
     }
-    str[length - 1] = '\0';
 }
 
-static void generateRandomString06(char* str, size_t length) {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-    if (length == 0) {
-        str[0] = '\0';
-        return;
-    }
-    srand((unsigned int)time(NULL));
-    int i;
-    for (i = 0; i < length - 1; i++) {
-        int index = rand() % (sizeof(charset) - 1);
-        str[i] = charset[index];
-    }
-    str[length - 1] = '\0';
+/* 图形绘制相关函数 */
+void HighlightPosition(VisualArray* array, int index, COLORREF color) {
+    int top = array->barHeight * index + array->startY;
+    int bottom = array->barHeight * (index + 1) + array->startY;
+    int width = array->barWidth * array->normalizedValues[index];
+    DrawRectangleArea(array->startX, top, array->startX + width, bottom - 2, color);
 }
 
-static void generateRandomString07(char* str, size_t length) {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-    if (length == 0) {
-        str[0] = '\0';
-        return;
-    }
-    srand((unsigned int)time(NULL));
-    int i;
-    for (i = 0; i < length - 1; i++) {
-        int index = rand() % (sizeof(charset) - 1);
-        str[i] = charset[index];
-    }
-    str[length - 1] = '\0';
+void HidePosition(VisualArray* array, int index) {
+    int top = array->barHeight * index + array->startY;
+    int bottom = array->barHeight * (index + 1) + array->startY;
+    DrawRectangleArea(array->startX, top, array->endX, bottom - 2, WHITE);
 }
 
-static void generateRandomString08(char* str, size_t length) {
-    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
-    if (length == 0) {
-        str[0] = '\0';
-        return;
-    }
-    srand((unsigned int)time(NULL));
+void DisplayVisualArray(VisualArray* array) {
     int i;
-    for (i = 0; i < length - 1; i++) {
-        int index = rand() % (sizeof(charset) - 1);
-        str[i] = charset[index];
+    for (i = 0; i < array->size; i++) {
+        int top = array->barHeight * i + array->startY;
+        int bottom = array->barHeight * (i + 1) + array->startY;
+        double ratio = array->normalizedValues[i];
+        int width = array->barWidth * ratio;
+
+        int r = getRValue(array->baseColor) * ratio + (1 - ratio) * (255 - getRValue(array->baseColor));
+        int g = getGValue(array->baseColor) * ratio + (1 - ratio) * (255 - getGValue(array->baseColor));
+        int b = getBValue(array->baseColor) * ratio + (1 - ratio) * (255 - getBValue(array->baseColor));
+
+        DrawRectangleArea(array->startX, top, array->startX + width, bottom - 2, RGB(r, g, b));
     }
-    str[length - 1] = '\0';
 }
+
+/* 数组操作函数 */
+void SwapElements(VisualArray* array, int firstIdx, int secondIdx) {
+    HidePosition(array, firstIdx);
+    HidePosition(array, secondIdx);
+
+    double temp = array->normalizedValues[firstIdx];
+    array->normalizedValues[firstIdx] = array->normalizedValues[secondIdx];
+    array->normalizedValues[secondIdx] = temp;
+
+    DisplayVisualArray(array);
+    HighlightPosition(array, secondIdx, LIGHT_RED);
+    SleepMilliseconds(2);
+    DisplayVisualArray(array);
+}
+
+int CompareElements(VisualArray* array, int firstIdx, int secondIdx) {
+    HighlightPosition(array, firstIdx, LIGHT_PURPLE);
+    SleepMilliseconds(1);
+    DisplayVisualArray(array);
+    return array->normalizedValues[firstIdx] < array->normalizedValues[secondIdx];
+}
+
+/* 系统相关函数 */
+void SleepMilliseconds(int ms) {
+    timerSpec.tv_nsec = 1000000L * ms;
+    nanosleep(&timerSpec, &timerSpec);
+}
+
+void DrawRectangleArea(int x1, int y1, int x2, int y2, COLORREF color) {
+    int i, j;
+    for (i = x1; i <= x2; i++) {
+        for (j = y1; j < y2; j++) {
+            setPixel(i, j, color);
+        }
+    }
+}
+
+int CreateTask(void* taskFunc, unsigned int stackSize) {
+    unsigned char* stack = (unsigned char*)malloc(stackSize);
+    return task_create(stack + stackSize, taskFunc, (void*)0);
+}
+
+void GenerateRandomArray(int* array, int size) {
+    srand(time(NULL));
+    int i;
+    for (i = 0; i < size; i++)
+        array[i] = rand() % size;
+}
+
+/* 排序算法实现 */
+int Partition(VisualArray* array, int low, int high) {
+    int pivotIndex = high;
+    int i = low - 1;
+    int j;
+
+    for (j = low; j < high; j++) {
+        if (CompareElements(array, j, pivotIndex)) {
+            i++;
+            SwapElements(array, i, j);
+        }
+    }
+    SwapElements(array, i + 1, pivotIndex);
+    return i + 1;
+}
+
+void QuickSort(VisualArray* array, int low, int high) {
+    if (low < high && low >= 0 && high < array->size) {
+        int pivot = Partition(array, low, high);
+        QuickSort(array, low, pivot - 1);
+        QuickSort(array, pivot + 1, high);
+    }
+}
+
+void BubbleSort(VisualArray* array) {
+    int i, j;
+    for (i = 0; i < array->size - 1; i++) {
+        for (j = 0; j < array->size - i - 1; j++) {
+            if (!CompareElements(array, j, j + 1)) {
+                SwapElements(array, j, j + 1);
+            }
+        }
+    }
+}
+
+/* 生产者-消费者实现 */
+#define BUFFER_SIZE 6
+int emptySemaphore;
+int fullSemaphore;
+int* mutexSemaphores;
+VisualArray* visualBuffers;
+
+void ProducerTask() {
+    int currentArea = 0;
+    double areaWidth = (double)800 / BUFFER_SIZE;
+
+    while (1) {
+        sem_wait(emptySemaphore);
+        sem_wait(mutexSemaphores[currentArea]);
+
+        GenerateRandomArray(dataArray, ARRAY_SIZE);
+        InitializeVisualArray(&visualBuffers[currentArea], dataArray, ARRAY_SIZE,
+            currentArea * areaWidth, 0,
+            (currentArea + 1) * areaWidth - 2, 500, LIGHT_PURPLE);
+
+        sem_signal(mutexSemaphores[currentArea]);
+        sem_signal(fullSemaphore);
+        currentArea = (currentArea + 1) % BUFFER_SIZE;
+    }
+}
+
+void ConsumerTask() {
+    int currentArea = 0;
+
+    while (1) {
+        sem_wait(fullSemaphore);
+        sem_wait(mutexSemaphores[currentArea]);
+
+        QuickSort(&visualBuffers[currentArea], 0, ARRAY_SIZE - 1);
+
+        sem_signal(mutexSemaphores[currentArea]);
+        sem_signal(emptySemaphore);
+        currentArea = (currentArea + 1) % BUFFER_SIZE;
+    }
+}
+
+/* 优先级显示 */
+void ShowPriority() {
+    int producerPriority = getpriority(producerThreadId);
+    int consumerPriority = getpriority(consumerThreadId);
+
+    DrawRectangleArea(0, 500, 800, 550, WHITE);
+    DrawRectangleArea(0, 500, (int)(800 * ((double)producerPriority / 40)), 525, LIGHT_PURPLE);
+    DrawRectangleArea(0, 525, (int)(800 * ((double)consumerPriority / 40)), 550, LIGHT_RED);
+}
+
+/* 进度条绘制 */
+void DrawProgressBar(int progress, int total) {
+    int barWidth = 800;
+    int barHeight = 20;
+    int startY = 580;
+    int filledWidth = (int)((double)progress / total * barWidth);
+
+    DrawRectangleArea(0, startY, barWidth, startY + barHeight, WHITE);
+    DrawRectangleArea(0, startY, filledWidth, startY + barHeight, LIGHT_PURPLE);
+}
+
+
+
+/* 控制任务 */
+void ControlTask() {
+    int key = getchar();
+    int priority;
+
+    while (1) {
+        switch (key) {
+        case 0x4800:  // 上箭头
+            priority = getpriority(producerThreadId) - 1;
+            if (priority > 5) {
+                setpriority(producerThreadId, priority);
+                setpriority(consumerThreadId, 40 - priority);
+            }
+            break;
+
+        case 0x5000:  // 下箭头
+            priority = getpriority(producerThreadId) + 1;
+            if (priority < 35) {
+                setpriority(producerThreadId, priority);
+                setpriority(consumerThreadId, 40 - priority);
+            }
+            break;
+        }
+        ShowPriority();
+        SleepMilliseconds(100);
+        key = getchar();
+    }
+}
+
+/* 主函数 */
+void main(void* pv)
+{
+    printf("Task #%d: Initializing system (pv=0x%08x)\n", task_getid(), pv);
+
+    init_graphic(0x0143);  // 初始化图形模式 800x600
+    DrawRectangleArea(0, 0, 800, 600, WHITE);
+    dataArray = (int*)malloc(ARRAY_SIZE * sizeof(int));
+
+    // 初始化缓冲区
+    visualBuffers = (VisualArray*)malloc(sizeof(VisualArray) * BUFFER_SIZE);
+    emptySemaphore = sem_create(BUFFER_SIZE);
+    fullSemaphore = sem_create(0);
+    mutexSemaphores = (int*)malloc(sizeof(int) * BUFFER_SIZE);
+
+    int i;
+    for (i = 0; i < BUFFER_SIZE; i++)
+        mutexSemaphores[i] = sem_create(1);
+
+    // 创建任务
+    consumerThreadId = CreateTask(ConsumerTask, 4096);
+    producerThreadId = CreateTask(ProducerTask, 4096);
+    CreateTask(ControlTask, 4096);
+
+
+    int progress = 0;
+    while (1) {
+        DrawProgressBar(progress, 100);
+        progress = (progress + 1) % 101;
+        SleepMilliseconds(100);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
