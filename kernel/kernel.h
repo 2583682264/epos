@@ -216,5 +216,9 @@ void     mi_startup();
 time_t   sys_time(); //第一次实验添加项
 int sys_getpriority(int tid);
 int sys_setpriority(int tid, int prio);//第三次实验添加项
+int sys_sem_create(int value);
+int sys_sem_destroy(int semid);
+int sys_sem_wait(int semid);
+int sys_sem_signal(int semid);//第四次实验添加项
 
 #endif /*_KERNEL_H*/

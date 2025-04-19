@@ -884,6 +884,32 @@ void syscall(struct context *ctx)
     }
     break;
     //第三次实验添加项
+
+    case SYSCALL_sem_create:
+    {
+        int val = *(int*)(ctx->esp + 4);
+        ctx->eax = sys_sem_create(val);
+    }
+    break;
+    case SYSCALL_sem_destroy:
+    {
+        int semid = *(int*)(ctx->esp + 4);
+        ctx->eax = sys_sem_destroy(semid);
+    }
+    break;
+    case SYSCALL_sem_wait:
+    {
+        int semid = *(int*)(ctx->esp + 4);
+        ctx->eax = sys_sem_wait(semid);
+    }
+    break;
+    case SYSCALL_sem_signal:
+    {
+        int semid = *(int*)(ctx->esp + 4);
+        ctx->eax = sys_sem_signal(semid);
+    }
+    break;
+    //第四次实验添加想
             
 
     default:

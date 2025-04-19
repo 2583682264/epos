@@ -45,7 +45,10 @@
 
 #define SYSCALL_getpriority    2026
 #define SYSCALL_setpriority    2027 //第三次实验添加项
-
+#define SYSCALL_sem_create      2028
+#define SYSCALL_sem_destroy     2029
+#define SYSCALL_sem_wait        2030
+#define SYSCALL_sem_signal      2031 //第四次实验添加项	
 
 
 #endif /*_SYSCALLNR_H*/

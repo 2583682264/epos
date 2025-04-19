@@ -30,3 +30,8 @@ WRAPPER(time)  /*第一次实验添加项*/
 WRAPPER(getpriority)
 WRAPPER(setpriority)/*第三次实验添加项*/
 
+WRAPPER(sem_create)
+WRAPPER(sem_destroy)
+WRAPPER(sem_wait)
+WRAPPER(sem_signal)/*第四次实验添加项*/
+

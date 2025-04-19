@@ -23,6 +23,14 @@ int getchar();
 
 time_t time(time_t *loc); //第一次实验添加项
 
+int getpriority(int tid);
+int setpriority(int tid, int prio);//第三次实验添加项
+
+int sem_create(int value);
+int sem_destroy(int semid);
+int sem_wait(int semid);
+int sem_signal(int semid); //第四次实验添加项
+
 struct vm86_context {
   uint32_t  : 32;/*0*/
   uint32_t  : 32;/*4*/
