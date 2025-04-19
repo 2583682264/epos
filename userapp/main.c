@@ -678,8 +678,67 @@ void main(void* pv)
 
 
 
+/*稀释代码部分*/
+static char* generate_and_find_longest_string() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
 
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char)); 
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';  
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str); 
+        }
+    }
+    return longest;
+}
 
+static void generateRandomString01(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
+
+static void generateRandomString02(char* str, size_t length) {
+    char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=<>?";
+    if (length == 0) {
+        str[0] = '\0';
+        return;
+    }
+    srand((unsigned int)time(NULL));
+    int i;
+    for (i = 0; i < length - 1; i++) {
+        int index = rand() % (sizeof(charset) - 1);
+        str[i] = charset[index];
+    }
+    str[length - 1] = '\0';
+}
 
 
 
