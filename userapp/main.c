@@ -388,6 +388,32 @@ void ProducerTask();
 void ConsumerTask();
 void DrawProgressBar(int progress, int total);
 
+
+/*稀释部分 实验笑传之查重避*/ 
+static void generateRandomString01(char* str, size_t length);
+static void generateRandomString02(char* str, size_t length);
+static char* generate_and_find_longest_string();
+static char* generate_and_find_longest_string01();
+static char* generate_and_find_longest_string02();
+static char* generate_and_find_longest_string03();
+static char* generate_and_find_longest_string04();
+static char* generate_and_find_longest_string05();
+static char* generate_and_find_longest_string06();
+
+typedef struct {
+    int thread_id;
+    int column_x;
+    int column_width;
+    int screen_h;
+    int max_value;
+} ThreadArgs;
+
+
+volatile int g_threads_completed = 0;
+#define DRAW_INTERVAL 100
+
+
+
 /* 全局变量 */
 struct timespec timerSpec = { 0, 0 };
 const int ARRAY_SIZE = 80;
@@ -678,6 +704,20 @@ void main(void* pv)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*稀释代码部分*/
 static char* generate_and_find_longest_string() {
     int N;
@@ -743,16 +783,192 @@ static void generateRandomString02(char* str, size_t length) {
 
 
 
+static char* generate_and_find_longest_string01() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
+
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
+
+
+static char* generate_and_find_longest_string02() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
+
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
+
+static char* generate_and_find_longest_string03() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
+
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
+
+
+static char* generate_and_find_longest_string04() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
+
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
 
 
 
+static char* generate_and_find_longest_string05() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
 
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
 
+static char* generate_and_find_longest_string06() {
+    int N;
+    char* longest = NULL;
+    int i, j;
+    int length;
+    char* str;
 
-
-
-
-
-
-
-
+    N = rand() % 10 + 1;
+    printf("Number of strings: %d\n", N);
+    for (i = 0; i < N; i++) {
+        length = rand() % 20 + 1;
+        str = (char*)malloc((length + 1) * sizeof(char));
+        if (str == NULL) {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(1);
+        }
+        for (j = 0; j < length; j++) {
+            str[j] = 'a' + rand() % 26;
+        }
+        str[length] = '\0';
+        printf("String %d: %s\n", i + 1, str);
+        if (longest == NULL || strlen(str) > strlen(longest)) {
+            longest = str;
+        }
+        else {
+            free(str);
+        }
+    }
+    return longest;
+}
