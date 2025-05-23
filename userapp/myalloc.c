@@ -1,6 +1,55 @@
 /**
  * vim: filetype=c:fenc=utf-8:ts=4:et:sw=4:sts=4
  */
+//#include <sys/types.h>
+//#include <string.h>
+//#include <stdint.h>
+//#include <unistd.h>
+//#include <syscall.h>
+//#include <stdio.h>
+//
+//struct chunk {
+//    char signature[4];  /* "OSEX" */
+//    struct chunk *next; /* ptr. to next chunk */
+//    int state;          /* 0 - free, 1 - used */
+//#define FREE   0
+//#define USED   1
+//
+//    int size;           /* size of this chunk */
+//};
+//
+//static struct chunk *chunk_head;
+//
+//void *g_heap;
+//void *tlsf_create_with_pool(uint8_t *heap_base, size_t heap_size)
+//{
+//    chunk_head = (struct chunk *)heap_base;
+//    strncpy(chunk_head->signature, "OSEX", 4);
+//    chunk_head->next = NULL;
+//    chunk_head->state = FREE;
+//    chunk_head->size  = heap_size;
+//
+//    return NULL;
+//}
+//
+//void *malloc(size_t size)
+//{
+//    return NULL;
+//}
+//
+//void free(void *ptr)
+//{
+//}
+//
+//void *calloc(size_t num, size_t size)
+//{
+//    return NULL;
+//}
+//
+//void *realloc(void *oldptr, size_t size)
+//{
+//    return NULL;
+//}
 #include <sys/types.h>
 #include <string.h>
 #include <stdint.h>
@@ -8,48 +57,216 @@
 #include <syscall.h>
 #include <stdio.h>
 
-struct chunk {
-    char signature[4];  /* "OSEX" */
-    struct chunk *next; /* ptr. to next chunk */
-    int state;          /* 0 - free, 1 - used */
-#define FREE   0
-#define USED   1
+/* 定义内存管理相关宏 */
+#define MEM_ALIGNMENT       8
+#define MEM_SIGNATURE      "OSEX"
+#define MEM_SIGNATURE_SIZE 4
+#define LOCK()             sem_wait(MEM_SEM_ID)
+#define UNLOCK()           sem_signal(MEM_SEM_ID)
 
-    int size;           /* size of this chunk */
+void* g_heap;
+/* 内存块控制结构 */
+struct chunk {
+    char signature[MEM_SIGNATURE_SIZE];  /* 内存签名用于验证 */
+    struct chunk* next;      /* 下一个内存块指针 */
+    int state;               /* 块状态标记 */
+    size_t size;             /* 当前块数据区大小 */
 };
 
-static struct chunk *chunk_head;
+static struct chunk* chunk_head;  /* 内存块链表头 */
+int MEM_SEM_ID;                   /* 内存操作信号量 */
 
-void *g_heap;
-void *tlsf_create_with_pool(uint8_t *heap_base, size_t heap_size)
+/* 辅助函数声明 */
+static void  init_chunk(struct chunk* chunk, size_t size, int state);
+static int   is_valid_chunk(struct chunk* chunk);
+static void  split_chunk(struct chunk* chunk, size_t size);
+static void  merge_adjacent(struct chunk* chunk);
+static struct chunk* find_prev_chunk(struct chunk* target);
+
+/**
+ * 内存池初始化函数
+ * @param heap_base  堆内存起始地址
+ * @param heap_size  堆内存总大小
+ */
+void* tlsf_create_with_pool(uint8_t* heap_base, size_t heap_size)
 {
-    chunk_head = (struct chunk *)heap_base;
-    strncpy(chunk_head->signature, "OSEX", 4);
-    chunk_head->next = NULL;
-    chunk_head->state = FREE;
-    chunk_head->size  = heap_size;
+    chunk_head = (struct chunk*)heap_base;
+    init_chunk(chunk_head, heap_size, 0);
 
+    MEM_SEM_ID = sem_create(1);  // 初始化互斥信号量
     return NULL;
 }
 
-void *malloc(size_t size)
+/**
+ * 内存分配核心函数
+ * @param size  请求分配的内存大小
+ * @return 分配的内存指针，失败返回NULL
+ */
+void* malloc(size_t size)
 {
-    return NULL;
+    if (size == 0) return NULL;
+
+    /* 内存对齐处理 */
+    size = (size + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT - 1);
+
+    LOCK();
+    struct chunk* current = chunk_head;
+    void* alloc_ptr = NULL;
+
+    while (current) {
+        if (current->state == 0 && current->size >= size) {
+            /* 执行块分割 */
+            split_chunk(current, size);
+            current->state = 1;
+            alloc_ptr = (void*)((uint8_t*)current + sizeof(struct chunk));
+            break;
+        }
+        current = current->next;
+    }
+
+    UNLOCK();
+    return alloc_ptr;
 }
 
-void free(void *ptr)
+/**
+ * 内存释放函数
+ * @param ptr 要释放的内存指针
+ */
+void free(void* ptr)
 {
+    if (!ptr) return;
+
+    struct chunk* chunk = (struct chunk*)((uint8_t*)ptr - sizeof(struct chunk));
+    if (!is_valid_chunk(chunk)) return;
+
+    LOCK();
+    chunk->state = 0;
+
+    /* 合并相邻空闲块 */
+    merge_adjacent(chunk);
+    UNLOCK();
 }
 
-void *calloc(size_t num, size_t size)
+/**
+ * 清空内存分配函数
+ * @param num  元素数量
+ * @param size 单个元素大小
+ */
+void* calloc(size_t num, size_t size)
 {
-    return NULL;
+    size_t total = num * size;
+    void* ptr = malloc(total);
+    return ptr ? memset(ptr, 0, total) : NULL;
 }
 
-void *realloc(void *oldptr, size_t size)
+/**
+ * 内存重分配函数
+ * @param oldptr 原内存指针
+ * @param size   新请求大小
+ */
+void* realloc(void* oldptr, size_t size)
 {
-    return NULL;
+    if (!oldptr) return malloc(size);
+    if (size == 0) {
+        free(oldptr);
+        return NULL;
+    }
+
+    struct chunk* chunk = (struct chunk*)((uint8_t*)oldptr - sizeof(struct chunk));
+    if (!is_valid_chunk(chunk)) return NULL;
+
+    /* 新大小对齐处理 */
+    size = (size + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT - 1);
+
+    LOCK();
+    void* newptr = NULL;
+
+    /* 尝试原地扩展 */
+    if (chunk->size >= size) {
+        split_chunk(chunk, size);
+        newptr = oldptr;
+    }
+    /* 尝试合并后扩展 */
+    else if (chunk->next && !chunk->next->state &&
+        (chunk->size + sizeof(struct chunk) + chunk->next->size) >= size) {
+        chunk->size += sizeof(struct chunk) + chunk->next->size;
+        chunk->next = chunk->next->next;
+        split_chunk(chunk, size);
+        newptr = oldptr;
+    }
+    /* 需要重新分配 */
+    else {
+        newptr = malloc(size);
+        if (newptr) {
+            memcpy(newptr, oldptr, chunk->size < size ? chunk->size : size);
+            free(oldptr);
+        }
+    }
+
+    UNLOCK();
+    return newptr;
 }
+
+/*************** 辅助函数实现 ***************/
+
+/* 初始化内存块结构 */
+static void init_chunk(struct chunk* chunk, size_t size, int state)
+{
+    memcpy(chunk->signature, MEM_SIGNATURE, MEM_SIGNATURE_SIZE);
+    chunk->size = size;
+    chunk->state = state;
+    chunk->next = NULL;
+}
+
+/* 验证内存块有效性 */
+static int is_valid_chunk(struct chunk* chunk)
+{
+    return memcmp(chunk->signature, MEM_SIGNATURE, MEM_SIGNATURE_SIZE) == 0;
+}
+
+/* 内存块分割操作 */
+static void split_chunk(struct chunk* chunk, size_t size)
+{
+    if (chunk->size - size <= sizeof(struct chunk)) return;
+
+    struct chunk* new_chunk = (struct chunk*)((uint8_t*)chunk + sizeof(struct chunk) + size);
+    init_chunk(new_chunk, chunk->size - size - sizeof(struct chunk), 0);
+    new_chunk->next = chunk->next;
+    chunk->next = new_chunk;
+    chunk->size = size;
+}
+
+/* 相邻块合并操作 */
+static void merge_adjacent(struct chunk* chunk)
+{
+    /* 向前合并 */
+    struct chunk* prev = find_prev_chunk(chunk);
+    if (prev && prev->state == 0) {
+        prev->size += sizeof(struct chunk) + chunk->size;
+        prev->next = chunk->next;
+        chunk = prev;
+    }
+
+    /* 向后合并 */
+    if (chunk->next && chunk->next->state == 0) {
+        chunk->size += sizeof(struct chunk) + chunk->next->size;
+        chunk->next = chunk->next->next;
+    }
+}
+
+/* 查找前驱块 */
+static struct chunk* find_prev_chunk(struct chunk* target)
+{
+    struct chunk* current = chunk_head, * prev = NULL;
+    while (current && current != target) {
+        prev = current;
+        current = current->next;
+    }
+    return prev;
+}
+
+
+
 
 /*************D O  N O T  T O U C H  A N Y T H I N G  B E L O W*************/
 static void tsk_malloc(void *pv)
