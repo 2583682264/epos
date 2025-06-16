@@ -48,26 +48,6 @@ void ConsumerTask();
 void DrawProgressBar(int progress, int total);
 
 
-/*稀释部分 实验笑传之查重避*/ 
-static void generateRandomString01(char* str, size_t length);
-static void generateRandomString02(char* str, size_t length);
-static char* generate_and_find_longest_string();
-static char* generate_and_find_longest_string01();
-static char* generate_and_find_longest_string02();
-static char* generate_and_find_longest_string03();
-static char* generate_and_find_longest_string04();
-static char* generate_and_find_longest_string05();
-static char* generate_and_find_longest_string06();
-
-typedef struct {
-    int thread_id;
-    int column_x;
-    int column_width;
-    int screen_h;
-    int max_value;
-} ThreadArgs;
-
-
 volatile int g_threads_completed = 0;
 #define DRAW_INTERVAL 100
 
