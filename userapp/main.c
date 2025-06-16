@@ -267,71 +267,19 @@ int all_threads_done() {
 }
 
 void main(void* pv) {
-    int i, j;
-    int screen_w, screen_h, column_width;
-    ThreadArgs args[NUM_THREADS];
-    void* stacks[NUM_THREADS];
+    printf("task #%d: I'm the first user task(pv = 0x%08x)!\r\n",
+        task_getid(), pv);
+    time_t t1, t2;
 
-    /* 初始化图形模式 */
-    init_graphic(0x143);
+    //第一次调用time
+    t1 = time(&t2);
+    printf("%ld\n%ld\n%s\n", t1, t2, t1 == t2 ? "Same" : "Diff");
+    sleep(5);
+    //第二次调用time
+    t1 = time(&t2);
+    printf("%ld\n%ld\n%s\n", t1, t2, t1 == t2 ? "Same" : "Diff");
+    return 0;
 
-    /* 获取屏幕参数 */
-    screen_w = g_graphic_dev.XResolution;
-    screen_h = g_graphic_dev.YResolution;
-    column_width = screen_w / NUM_THREADS;
-
-    /* 生成随机数据 */
-    srand(time(NULL));
-    for (i = 0; i < NUM_THREADS; i++) {
-        for (j = 0; j < N; j++) {
-            lists[i][j] = rand() % 10000;
-        }
-    }
-
-    /* 创建线程 */
-    for (i = 0; i < NUM_THREADS; i++) {
-        /* 设置线程参数 */
-        args[i].thread_id = i;
-        args[i].column_x = i * column_width;
-        args[i].column_width = column_width;
-        args[i].screen_h = screen_h;
-        args[i].max_value = 10000;
-
-        /* 分配栈空间 */
-        stacks[i] = malloc(STACK_SIZE);
-        if (!stacks[i]) {
-            printf("Failed to allocate stack for thread %d\n", i);
-            continue;
-        }
-
-        /* 计算栈顶指针（栈向下增长）*/
-        void* tos = (char*)stacks[i] + STACK_SIZE;
-
-        /* 创建线程 */
-        if (task_create(tos, sort_thread, &args[i]) < 0) {
-            printf("Failed to create thread %d\n", i);
-            free(stacks[i]);
-        }
-
-        /* 每创建一个线程后短暂延迟 */
-        my_sleep(100);
-    }
-
-    /* 主循环 */
-    while (!all_threads_done()) {
-        task_yield(); /* 主动让出CPU */
-        my_sleep(50); /* 添加短暂延迟 */
-    }
-
-    /* 结束前等待一段时间 */
-    my_sleep(2000);
-
-    /* 清理资源 */
-    for (i = 0; i < NUM_THREADS; i++) {
-        free(stacks[i]);
-    }
-
-    exit_graphic();
+    /* 退出程序 */
     task_exit(0);
 }
-   
